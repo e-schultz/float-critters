@@ -7,9 +7,9 @@ import IndexPage from "@/pages/index";
 import IssuePage from "@/pages/zine/[slug]";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/index";
-import AdminImport from "@/pages/admin/import";
-import AdminContent from "@/pages/admin/content";
-import AdminChat from "@/pages/admin/chat";
+import AdminImport from "@/pages/admin/import.tsx";
+import AdminContent from "@/pages/admin/content.tsx";
+import AdminChat from "@/pages/admin/chat.tsx";
 import NotFound from "@/pages/not-found";
 
 function Router() {

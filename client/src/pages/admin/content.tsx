@@ -37,7 +37,7 @@ export default function AdminContent() {
     queryKey: ['/api/admin/issues'],
     queryFn: async () => {
       const token = localStorage.getItem('admin-token');
-      const response = await apiRequest('/api/admin/issues', {
+      const response = await fetch('/api/admin/issues', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -54,7 +54,7 @@ export default function AdminContent() {
 
     try {
       const token = localStorage.getItem('admin-token');
-      const response = await apiRequest(`/api/admin/issues/${slug}`, {
+      const response = await fetch(`/api/admin/issues/${slug}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

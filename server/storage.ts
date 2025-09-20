@@ -118,7 +118,7 @@ export class MemStorage implements IStorage {
     const now = new Date();
     let cleanedCount = 0;
     
-    for (const [token, session] of this.adminSessions.entries()) {
+    for (const [token, session] of Array.from(this.adminSessions.entries())) {
       if (session.expiresAt < now) {
         this.adminSessions.delete(token);
         cleanedCount++;
@@ -143,6 +143,11 @@ export class MemStorage implements IStorage {
     const newIssue: Issue = { 
       ...issue, 
       id, 
+      subtitle: issue.subtitle || null,
+      tagline: issue.tagline || null,
+      intro: issue.intro || null,
+      metadata: issue.metadata || null,
+      publishedAt: issue.publishedAt || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -173,6 +178,10 @@ export class MemStorage implements IStorage {
     const newImport: ContentImport = { 
       ...contentImport, 
       id, 
+      status: contentImport.status || 'pending',
+      metadata: contentImport.metadata || null,
+      transformedContent: contentImport.transformedContent || null,
+      issueSlug: contentImport.issueSlug || null,
       createdAt: new Date() 
     };
     this.contentImports.set(id, newImport);

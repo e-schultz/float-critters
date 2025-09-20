@@ -33,7 +33,7 @@ export default function AdminDashboard() {
     enabled: !!user,
     queryFn: async () => {
       const token = localStorage.getItem('admin-token');
-      const response = await apiRequest('/api/admin/issues', {
+      const response = await fetch('/api/admin/issues', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -48,7 +48,7 @@ export default function AdminDashboard() {
     enabled: !!user,
     queryFn: async () => {
       const token = localStorage.getItem('admin-token');
-      const response = await apiRequest('/api/admin/imports', {
+      const response = await fetch('/api/admin/imports', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

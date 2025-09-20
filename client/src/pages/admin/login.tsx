@@ -21,11 +21,7 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      const response = await apiRequest('/api/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({ username, password }),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await apiRequest('POST', '/api/admin/login', { username, password });
 
       if (!response.ok) {
         const errorData = await response.json();
