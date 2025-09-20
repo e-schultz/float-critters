@@ -364,6 +364,304 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('data/issues.json', { root: process.cwd() });
   });
 
+  // Admin authentication middleware
+  const requireAdminAuth = async (req: any, res: any, next: any) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Admin token required' });
+      }
+
+      const token = authHeader.slice(7);
+      const session = await storage.getAdminSession(token);
+      
+      if (!session) {
+        return res.status(401).json({ error: 'Invalid or expired admin session' });
+      }
+
+      const user = await storage.getUser(session.userId);
+      if (!user || !user.isAdmin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      req.user = user;
+      req.session = session;
+      next();
+    } catch (error: any) {
+      console.error('Admin auth error:', error);
+      res.status(500).json({ error: 'Authentication error' });
+    }
+  };
+
+  // Admin login endpoint
+  app.post('/api/admin/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password required' });
+      }
+
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.password !== password || !user.isAdmin) {
+        return res.status(401).json({ error: 'Invalid credentials or insufficient permissions' });
+      }
+
+      // Create session token (24 hours expiry)
+      const token = Buffer.from(`${user.id}-${Date.now()}-${Math.random().toString(36)}`).toString('base64');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      const session = await storage.createAdminSession({
+        userId: user.id,
+        token,
+        expiresAt
+      });
+
+      res.json({
+        token: session.token,
+        user: {
+          id: user.id,
+          username: user.username,
+          isAdmin: user.isAdmin
+        },
+        expiresAt: session.expiresAt
+      });
+    } catch (error: any) {
+      console.error('Admin login error:', error);
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  // Admin user creation endpoint (for initial setup)
+  app.post('/api/admin/create-admin', async (req, res) => {
+    try {
+      const { username, password, secret } = req.body;
+      
+      // Simple secret for creating first admin (in production use env var)
+      if (secret !== 'field-guide-admin-setup-2024') {
+        return res.status(401).json({ error: 'Invalid setup secret' });
+      }
+
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(400).json({ error: 'Username already exists' });
+      }
+
+      const user = await storage.createUser({
+        username,
+        password,
+        isAdmin: true
+      });
+
+      res.json({
+        message: 'Admin user created successfully',
+        user: {
+          id: user.id,
+          username: user.username,
+          isAdmin: user.isAdmin
+        }
+      });
+    } catch (error: any) {
+      console.error('Admin creation error:', error);
+      res.status(500).json({ error: 'Failed to create admin user' });
+    }
+  });
+
+  // Content transformation endpoint
+  app.post('/api/admin/transform-content', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { content, contentType = 'text', targetFormat = 'zine-issue' } = req.body;
+
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+
+      // Create system prompt for content transformation
+      const systemPrompt = `You are an expert content transformer for the Field Guide Zine. Transform the provided content into a structured zine format following these exact specifications:
+
+**Output Format (JSON):**
+{
+  "title": "Clear, engaging title",
+  "subtitle": "Descriptive subtitle",
+  "version": "v1.0",
+  "tagline": "Memorable tagline that captures the essence",
+  "intro": "2-3 paragraph introduction explaining the topic and why it matters",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section Title",
+      "entries": [
+        {
+          "pattern": "Pattern Name",
+          "signals": ["Signal 1", "Signal 2", "Signal 3"],
+          "protocol": "Detailed protocol description with actionable steps",
+          "description": "Comprehensive explanation of the pattern and its applications"
+        }
+      ]
+    }
+  ]
+}
+
+**Guidelines:**
+- Extract key concepts and transform them into "patterns"
+- Each pattern should have 3-5 observable "signals"
+- Protocols should be actionable step-by-step processes
+- Maintain the "shacks not cathedrals" philosophy (practical over complex)
+- Ensure mobile-friendly content structure
+- Keep descriptions comprehensive but concise
+
+Transform the following content:`;
+
+      const stream = await anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 3000,
+        temperature: 0.3,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: content }],
+        stream: true
+      });
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Transfer-Encoding', 'chunked');
+
+      let fullResponse = '';
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          const text = chunk.delta.text;
+          fullResponse += text;
+          res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+        }
+      }
+
+      // Try to parse the final response as JSON to validate
+      try {
+        JSON.parse(fullResponse);
+        res.write(`data: ${JSON.stringify({ complete: true, valid: true })}\n\n`);
+      } catch {
+        res.write(`data: ${JSON.stringify({ complete: true, valid: false })}\n\n`);
+      }
+
+      res.write('data: [DONE]\n\n');
+      res.end();
+
+    } catch (error: any) {
+      console.error('Content transformation error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Content transformation failed' });
+      }
+    }
+  });
+
+  // Issues management endpoints
+  app.get('/api/admin/issues', requireAdminAuth, async (req: any, res) => {
+    try {
+      const issues = await storage.getIssues();
+      res.json({ issues });
+    } catch (error: any) {
+      console.error('Get issues error:', error);
+      res.status(500).json({ error: 'Failed to fetch issues' });
+    }
+  });
+
+  app.post('/api/admin/issues', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { slug, title, subtitle, version, tagline, intro, sections, publishedAt } = req.body;
+
+      if (!slug || !title || !version || !sections) {
+        return res.status(400).json({ error: 'Missing required fields: slug, title, version, sections' });
+      }
+
+      const existingIssue = await storage.getIssue(slug);
+      if (existingIssue) {
+        return res.status(400).json({ error: 'Issue with this slug already exists' });
+      }
+
+      const issue = await storage.createIssue({
+        slug,
+        title,
+        subtitle: subtitle || '',
+        version,
+        tagline: tagline || '',
+        intro: intro || '',
+        sections,
+        publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
+        metadata: {}
+      });
+
+      res.json({ issue, message: 'Issue created successfully' });
+    } catch (error: any) {
+      console.error('Create issue error:', error);
+      res.status(500).json({ error: 'Failed to create issue' });
+    }
+  });
+
+  app.put('/api/admin/issues/:slug', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { slug } = req.params;
+      const updates = req.body;
+
+      const updatedIssue = await storage.updateIssue(slug, updates);
+      if (!updatedIssue) {
+        return res.status(404).json({ error: 'Issue not found' });
+      }
+
+      res.json({ issue: updatedIssue, message: 'Issue updated successfully' });
+    } catch (error: any) {
+      console.error('Update issue error:', error);
+      res.status(500).json({ error: 'Failed to update issue' });
+    }
+  });
+
+  app.delete('/api/admin/issues/:slug', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { slug } = req.params;
+
+      const deleted = await storage.deleteIssue(slug);
+      if (!deleted) {
+        return res.status(404).json({ error: 'Issue not found' });
+      }
+
+      res.json({ message: 'Issue deleted successfully' });
+    } catch (error: any) {
+      console.error('Delete issue error:', error);
+      res.status(500).json({ error: 'Failed to delete issue' });
+    }
+  });
+
+  // Content import endpoints
+  app.get('/api/admin/imports', requireAdminAuth, async (req: any, res) => {
+    try {
+      const imports = await storage.getContentImports(req.user.id);
+      res.json({ imports });
+    } catch (error: any) {
+      console.error('Get imports error:', error);
+      res.status(500).json({ error: 'Failed to fetch imports' });
+    }
+  });
+
+  app.post('/api/admin/imports', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { originalContent, importType = 'text', metadata = {} } = req.body;
+
+      if (!originalContent) {
+        return res.status(400).json({ error: 'Original content is required' });
+      }
+
+      const contentImport = await storage.createContentImport({
+        userId: req.user.id,
+        originalContent,
+        importType,
+        status: 'pending',
+        metadata
+      });
+
+      res.json({ import: contentImport, message: 'Content import created successfully' });
+    } catch (error: any) {
+      console.error('Create import error:', error);
+      res.status(500).json({ error: 'Failed to create content import' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
