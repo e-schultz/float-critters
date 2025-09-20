@@ -905,6 +905,92 @@ Transform the following content:`;
     }
   });
 
+  // Workspace Publishing API Route
+  app.post('/api/admin/workspaces/:id/publish', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { slug, version, publishedAt } = req.body;
+
+      // Validate required fields
+      if (!slug || typeof slug !== 'string' || slug.trim().length === 0) {
+        return res.status(400).json({ error: 'Slug is required and must be a non-empty string' });
+      }
+
+      if (!version || typeof version !== 'string' || version.trim().length === 0) {
+        return res.status(400).json({ error: 'Version is required and must be a non-empty string' });
+      }
+
+      // Validate publishedAt if provided
+      let publishDate;
+      if (publishedAt) {
+        publishDate = new Date(publishedAt);
+        if (isNaN(publishDate.getTime())) {
+          return res.status(400).json({ error: 'Invalid publishedAt date format' });
+        }
+      }
+
+      // Check workspace exists and user has access
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied to this workspace' });
+      }
+
+      // Check if workspace has a draft
+      const draft = await storage.getDraft(id);
+      if (!draft || !draft.outline?.sections?.length) {
+        return res.status(400).json({ 
+          error: 'No draft content found. Please create and save draft content before publishing.' 
+        });
+      }
+
+      // Sanitize slug
+      const sanitizedSlug = slug.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+
+      if (sanitizedSlug.length === 0) {
+        return res.status(400).json({ error: 'Slug contains no valid characters' });
+      }
+
+      // Publish the workspace
+      const result = await storage.publishWorkspace(id, {
+        slug: sanitizedSlug,
+        version: version.trim(),
+        publishedAt: publishDate
+      });
+
+      res.json({
+        success: true,
+        message: 'Workspace published successfully',
+        issue: result.issue,
+        workspace: result.workspace
+      });
+
+    } catch (error: any) {
+      console.error('Publish workspace error:', error);
+      
+      // Handle specific error types
+      if (error.message.includes('already exists')) {
+        return res.status(409).json({ error: error.message });
+      }
+      
+      if (error.message.includes('not found') || error.message.includes('No draft content')) {
+        return res.status(400).json({ error: error.message });
+      }
+
+      res.status(500).json({ 
+        error: 'Failed to publish workspace',
+        details: error.message 
+      });
+    }
+  });
+
   // Workspace Chat API Routes
   app.get('/api/admin/workspaces/:id/messages', requireAdminAuth, async (req: any, res) => {
     try {

@@ -34,6 +34,123 @@ import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, desc, lt } from "drizzle-orm";
 
+// Content conversion utilities
+interface DraftSection {
+  id: string;
+  title: string;
+  content: string;
+  level: number;
+  children?: DraftSection[];
+}
+
+interface IssueSection {
+  id: string;
+  title: string;
+  icon: string;
+  color: string;
+  entries: {
+    pattern: string;
+    description: string;
+    signals: string[];
+    protocol: string;
+  }[];
+}
+
+function convertDraftToIssueFormat(draftSections: DraftSection[]): IssueSection[] {
+  const issuesSections: IssueSection[] = [];
+  
+  const iconOptions = ['circle', 'square', 'triangle', 'shield', 'zap', 'battery', 'trending-up'];
+  const colorOptions = ['cyan', 'purple', 'green', 'yellow'];
+  
+  const processSections = (sections: DraftSection[], parentIndex = 0) => {
+    sections.forEach((section, index) => {
+      // Convert each top-level section to an Issue section
+      if (section.level === 1) {
+        const issueSection: IssueSection = {
+          id: section.id,
+          title: section.title,
+          icon: iconOptions[parentIndex % iconOptions.length],
+          color: colorOptions[parentIndex % colorOptions.length],
+          entries: []
+        };
+        
+        // Convert section content and children to entries
+        if (section.content.trim()) {
+          const entry = {
+            pattern: section.title,
+            description: section.content,
+            signals: extractSignals(section.content),
+            protocol: extractProtocol(section.content)
+          };
+          issueSection.entries.push(entry);
+        }
+        
+        // Process children as additional entries
+        if (section.children) {
+          section.children.forEach(child => {
+            const childEntry = {
+              pattern: child.title,
+              description: child.content || 'No description provided',
+              signals: extractSignals(child.content),
+              protocol: extractProtocol(child.content)
+            };
+            issueSection.entries.push(childEntry);
+          });
+        }
+        
+        issuesSections.push(issueSection);
+        parentIndex++;
+      }
+    });
+  };
+  
+  processSections(draftSections);
+  return issuesSections;
+}
+
+function extractSignals(content: string): string[] {
+  // Simple heuristic to extract signals from content
+  const signalKeywords = ['when', 'if', 'warning', 'alert', 'issue', 'problem', 'symptom'];
+  const sentences = content.split('.').map(s => s.trim()).filter(s => s.length > 0);
+  
+  const signals = sentences.filter(sentence => 
+    signalKeywords.some(keyword => 
+      sentence.toLowerCase().includes(keyword)
+    )
+  ).slice(0, 3); // Limit to 3 signals
+  
+  return signals.length > 0 ? signals : ['Implementation needed', 'System complexity', 'Performance considerations'];
+}
+
+function extractProtocol(content: string): string {
+  // Simple heuristic to extract protocol from content
+  const protocolKeywords = ['step', 'first', 'then', 'finally', 'process', 'method', 'approach'];
+  const sentences = content.split('.').map(s => s.trim()).filter(s => s.length > 0);
+  
+  const protocolSentences = sentences.filter(sentence =>
+    protocolKeywords.some(keyword =>
+      sentence.toLowerCase().includes(keyword)
+    )
+  );
+  
+  if (protocolSentences.length > 0) {
+    return protocolSentences.join(' → ');
+  }
+  
+  // Fallback protocol
+  return '1. Analyze requirements 2. Design solution 3. Implement changes 4. Test and validate';
+}
+
+function generateSlugFromTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
+    .substring(0, 50);
+}
+
 // modify the interface with any CRUD methods
 // you might need
 
@@ -91,6 +208,9 @@ export interface IStorage {
   // Activity methods
   createActivity(activity: InsertActivity): Promise<Activity>;
   getActivities(workspaceId: string): Promise<Activity[]>;
+
+  // Publishing methods
+  publishWorkspace(workspaceId: string, publishData: { slug: string, version: string, publishedAt?: Date }): Promise<{ issue: Issue, workspace: Workspace }>;
 }
 
 export class MemStorage implements IStorage {
@@ -436,6 +556,72 @@ export class MemStorage implements IStorage {
       .filter(activity => activity.workspaceId === workspaceId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
+
+  // Publishing methods
+  async publishWorkspace(workspaceId: string, publishData: { slug: string, version: string, publishedAt?: Date }): Promise<{ issue: Issue, workspace: Workspace }> {
+    // Get workspace
+    const workspace = this.workspaces.get(workspaceId);
+    if (!workspace) {
+      throw new Error('Workspace not found');
+    }
+
+    // Get draft
+    const draft = this.drafts.get(workspaceId);
+    if (!draft || !draft.outline?.sections) {
+      throw new Error('No draft content found for workspace');
+    }
+
+    // Check if slug already exists
+    const existingIssue = this.issues.get(publishData.slug);
+    if (existingIssue) {
+      throw new Error(`An issue with slug "${publishData.slug}" already exists`);
+    }
+
+    // Convert draft sections to issue format
+    const convertedSections = convertDraftToIssueFormat(draft.outline.sections);
+    
+    // Create the issue
+    const issueData: InsertIssue = {
+      slug: publishData.slug,
+      title: draft.title || workspace.title,
+      subtitle: `Published from workspace: ${workspace.title}`,
+      version: publishData.version,
+      tagline: workspace.goal || 'Collaborative workspace content',
+      intro: `This content was collaboratively created in workspace "${workspace.title}" and represents the collective insights and patterns discovered during the ideation process.`,
+      sections: convertedSections,
+      metadata: {
+        sourceWorkspaceId: workspaceId,
+        publishedBy: workspace.userId,
+        originalGoal: workspace.goal
+      },
+      publishedAt: publishData.publishedAt || new Date()
+    };
+
+    const issue = await this.createIssue(issueData);
+
+    // Update workspace status
+    const updatedWorkspace = await this.updateWorkspace(workspaceId, { 
+      status: 'completed' 
+    });
+
+    if (!updatedWorkspace) {
+      throw new Error('Failed to update workspace status');
+    }
+
+    // Create activity record
+    await this.createActivity({
+      workspaceId,
+      userId: workspace.userId,
+      type: 'publish',
+      description: `Published draft as Issue "${issue.title}" (${issue.slug})`,
+      metadata: {
+        issueSlug: issue.slug,
+        publishedAt: issue.publishedAt
+      }
+    });
+
+    return { issue, workspace: updatedWorkspace };
+  }
 }
 
 export class DbStorage implements IStorage {
@@ -735,6 +921,72 @@ export class DbStorage implements IStorage {
       .where(eq(activities.workspaceId, workspaceId))
       .orderBy(desc(activities.createdAt));
     return result;
+  }
+
+  // Publishing methods
+  async publishWorkspace(workspaceId: string, publishData: { slug: string, version: string, publishedAt?: Date }): Promise<{ issue: Issue, workspace: Workspace }> {
+    // Get workspace
+    const workspace = await this.getWorkspace(workspaceId);
+    if (!workspace) {
+      throw new Error('Workspace not found');
+    }
+
+    // Get draft
+    const draft = await this.getDraft(workspaceId);
+    if (!draft || !draft.outline?.sections) {
+      throw new Error('No draft content found for workspace');
+    }
+
+    // Check if slug already exists
+    const existingIssue = await this.getIssue(publishData.slug);
+    if (existingIssue) {
+      throw new Error(`An issue with slug "${publishData.slug}" already exists`);
+    }
+
+    // Convert draft sections to issue format
+    const convertedSections = convertDraftToIssueFormat(draft.outline.sections);
+    
+    // Create the issue
+    const issueData: InsertIssue = {
+      slug: publishData.slug,
+      title: draft.title || workspace.title,
+      subtitle: `Published from workspace: ${workspace.title}`,
+      version: publishData.version,
+      tagline: workspace.goal || 'Collaborative workspace content',
+      intro: `This content was collaboratively created in workspace "${workspace.title}" and represents the collective insights and patterns discovered during the ideation process.`,
+      sections: convertedSections,
+      metadata: {
+        sourceWorkspaceId: workspaceId,
+        publishedBy: workspace.userId,
+        originalGoal: workspace.goal
+      },
+      publishedAt: publishData.publishedAt || new Date()
+    };
+
+    const issue = await this.createIssue(issueData);
+
+    // Update workspace status
+    const updatedWorkspace = await this.updateWorkspace(workspaceId, { 
+      status: 'completed' 
+    });
+
+    if (!updatedWorkspace) {
+      throw new Error('Failed to update workspace status');
+    }
+
+    // Create activity record
+    await this.createActivity({
+      workspaceId,
+      userId: workspace.userId,
+      type: 'publish',
+      description: `Published draft as Issue "${issue.title}" (${issue.slug})`,
+      metadata: {
+        issueSlug: issue.slug,
+        publishedAt: issue.publishedAt
+      }
+    });
+
+    return { issue, workspace: updatedWorkspace };
   }
 }
 
