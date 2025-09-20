@@ -662,6 +662,560 @@ Transform the following content:`;
     }
   });
 
+  // Workspace Management API Routes
+  app.post('/api/admin/workspaces', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { title, goal, rawContent = '' } = req.body;
+
+      if (!title || !goal) {
+        return res.status(400).json({ error: 'Title and goal are required' });
+      }
+
+      // Create workspace
+      const workspace = await storage.createWorkspace({
+        title,
+        goal,
+        userId: req.user.id,
+        status: 'active'
+      });
+
+      // Create initial draft
+      const draft = await storage.createDraft({
+        workspaceId: workspace.id,
+        content: { sections: [], rawContent },
+        outline: { sections: [] },
+        currentRevision: 1
+      });
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: workspace.id,
+        type: 'workspace_created',
+        payload: { title, goal }
+      });
+
+      res.json({ workspace, draft, message: 'Workspace created successfully' });
+    } catch (error: any) {
+      console.error('Create workspace error:', error);
+      res.status(500).json({ error: 'Failed to create workspace' });
+    }
+  });
+
+  app.get('/api/admin/workspaces', requireAdminAuth, async (req: any, res) => {
+    try {
+      const workspaces = await storage.getWorkspaces(req.user.id);
+      res.json({ workspaces });
+    } catch (error: any) {
+      console.error('Get workspaces error:', error);
+      res.status(500).json({ error: 'Failed to fetch workspaces' });
+    }
+  });
+
+  app.get('/api/admin/workspaces/:id', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      // Verify user ownership
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      res.json({ workspace });
+    } catch (error: any) {
+      console.error('Get workspace error:', error);
+      res.status(500).json({ error: 'Failed to fetch workspace' });
+    }
+  });
+
+  app.put('/api/admin/workspaces/:id', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { title, goal, status } = req.body;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const updatedWorkspace = await storage.updateWorkspace(id, {
+        title,
+        goal,
+        status
+      });
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: id,
+        type: 'workspace_updated',
+        payload: { title, goal, status }
+      });
+
+      res.json({ workspace: updatedWorkspace, message: 'Workspace updated successfully' });
+    } catch (error: any) {
+      console.error('Update workspace error:', error);
+      res.status(500).json({ error: 'Failed to update workspace' });
+    }
+  });
+
+  app.delete('/api/admin/workspaces/:id', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const deleted = await storage.deleteWorkspace(id);
+      if (!deleted) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      res.json({ message: 'Workspace deleted successfully' });
+    } catch (error: any) {
+      console.error('Delete workspace error:', error);
+      res.status(500).json({ error: 'Failed to delete workspace' });
+    }
+  });
+
+  // Draft Management API Routes
+  app.get('/api/admin/workspaces/:id/draft', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const draft = await storage.getDraft(id);
+      if (!draft) {
+        return res.status(404).json({ error: 'Draft not found' });
+      }
+
+      res.json({ draft });
+    } catch (error: any) {
+      console.error('Get draft error:', error);
+      res.status(500).json({ error: 'Failed to fetch draft' });
+    }
+  });
+
+  app.put('/api/admin/workspaces/:id/draft', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { content, outline } = req.body;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const updatedDraft = await storage.updateDraft(id, {
+        content,
+        outline
+      });
+
+      if (!updatedDraft) {
+        return res.status(404).json({ error: 'Draft not found' });
+      }
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: id,
+        type: 'draft_updated',
+        payload: { hasContent: !!content, hasOutline: !!outline }
+      });
+
+      res.json({ draft: updatedDraft, message: 'Draft updated successfully' });
+    } catch (error: any) {
+      console.error('Update draft error:', error);
+      res.status(500).json({ error: 'Failed to update draft' });
+    }
+  });
+
+  app.post('/api/admin/workspaces/:id/revisions', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { metadata = {} } = req.body;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const draft = await storage.getDraft(id);
+      if (!draft) {
+        return res.status(404).json({ error: 'Draft not found' });
+      }
+
+      // Get current revision count
+      const existingRevisions = await storage.getRevisions(id);
+      const nextRevisionNumber = existingRevisions.length + 1;
+
+      // Create revision snapshot
+      const revision = await storage.createRevision({
+        workspaceId: id,
+        draftId: draft.id,
+        number: nextRevisionNumber,
+        content: draft.content as any,
+        metadata: { ...metadata, snapshot: true }
+      });
+
+      // Update draft revision number
+      await storage.updateDraft(id, {
+        currentRevision: nextRevisionNumber
+      });
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: id,
+        type: 'revision_created',
+        payload: { revisionNumber: nextRevisionNumber }
+      });
+
+      res.json({ revision, message: 'Revision created successfully' });
+    } catch (error: any) {
+      console.error('Create revision error:', error);
+      res.status(500).json({ error: 'Failed to create revision' });
+    }
+  });
+
+  // Workspace Chat API Routes
+  app.get('/api/admin/workspaces/:id/messages', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const messages = await storage.getMessages(id);
+      res.json({ messages });
+    } catch (error: any) {
+      console.error('Get messages error:', error);
+      res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+  });
+
+  app.post('/api/admin/workspaces/:id/chat', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { message, sectionPath, modelId = DEFAULT_MODEL_STR } = req.body;
+
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Get current draft for context
+      const draft = await storage.getDraft(id);
+
+      // Store user message
+      const userMessage = await storage.createMessage({
+        workspaceId: id,
+        role: 'user',
+        content: message,
+        sectionPath: sectionPath || null,
+        metadata: { fromChat: true }
+      });
+
+      // Build workspace context system prompt
+      const systemPrompt = buildWorkspaceSystemPrompt(workspace, draft, sectionPath);
+
+      // Get recent conversation history
+      const recentMessages = await storage.getMessages(id);
+      const conversationHistory = recentMessages
+        .slice(-10) // Last 10 messages for context
+        .map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }));
+
+      // Set up SSE response
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Transfer-Encoding', 'chunked');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      // Create Anthropic stream
+      const stream = await anthropic.messages.create({
+        model: modelId,
+        max_tokens: 1000,
+        temperature: 0.7,
+        system: systemPrompt,
+        messages: [...conversationHistory, { role: 'user', content: message }],
+        stream: true
+      });
+
+      let fullResponse = '';
+      
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          const text = chunk.delta.text;
+          fullResponse += text;
+          
+          // Send streaming data in SSE format
+          const data = JSON.stringify({ 
+            content: text,
+            workspaceId: id,
+            sectionPath: sectionPath || null
+          });
+          res.write(`data: ${data}\n\n`);
+        }
+      }
+
+      // Store assistant response
+      await storage.createMessage({
+        workspaceId: id,
+        role: 'assistant',
+        content: fullResponse,
+        sectionPath: sectionPath || null,
+        metadata: { fromChat: true, model: modelId }
+      });
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: id,
+        type: 'message_sent',
+        payload: { 
+          userMessage: message.length > 100 ? message.substring(0, 100) + '...' : message,
+          sectionPath: sectionPath || null,
+          responseLength: fullResponse.length
+        }
+      });
+
+      // Send completion signal
+      res.write('data: [DONE]\n\n');
+      res.end();
+
+    } catch (error: any) {
+      console.error('Workspace chat error:', error);
+      
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          error: 'Failed to process chat message',
+          details: error.message 
+        });
+      } else {
+        // If headers are already sent, send error in stream format
+        const errorData = JSON.stringify({ 
+          error: 'Stream error occurred',
+          content: 'I apologize, but I encountered an error. Please try again.' 
+        });
+        res.write(`data: ${errorData}\n\n`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+      }
+    }
+  });
+
+  // Suggestion System API Routes
+  app.get('/api/admin/workspaces/:id/suggestions', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const suggestions = await storage.getSuggestions(id);
+      res.json({ suggestions });
+    } catch (error: any) {
+      console.error('Get suggestions error:', error);
+      res.status(500).json({ error: 'Failed to fetch suggestions' });
+    }
+  });
+
+  app.post('/api/admin/suggestions/:id/apply', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      // Get the suggestion
+      const suggestion = await storage.getSuggestions('');
+      const targetSuggestion = suggestion.find(s => s.id === id);
+      
+      if (!targetSuggestion) {
+        return res.status(404).json({ error: 'Suggestion not found' });
+      }
+
+      const workspace = await storage.getWorkspace(targetSuggestion.workspaceId);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Get current draft
+      const draft = await storage.getDraft(targetSuggestion.workspaceId);
+      if (!draft) {
+        return res.status(404).json({ error: 'Draft not found' });
+      }
+
+      // Apply the suggestion diff to the content
+      const updatedContent = applySuggestionDiff(draft.content as any, targetSuggestion.diff as any);
+
+      // Update the draft with applied changes
+      await storage.updateDraft(targetSuggestion.workspaceId, {
+        content: updatedContent as any
+      });
+
+      // Create a new revision with the applied suggestion
+      const existingRevisions = await storage.getRevisions(targetSuggestion.workspaceId);
+      const nextRevisionNumber = existingRevisions.length + 1;
+
+      const revision = await storage.createRevision({
+        workspaceId: targetSuggestion.workspaceId,
+        draftId: draft.id,
+        number: nextRevisionNumber,
+        content: updatedContent as any,
+        metadata: { 
+          appliedSuggestion: id,
+          suggestionRationale: targetSuggestion.rationale
+        }
+      });
+
+      // Update suggestion status
+      await storage.updateSuggestion(id, {
+        status: 'applied'
+      });
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: targetSuggestion.workspaceId,
+        type: 'suggestion_applied',
+        payload: { 
+          suggestionId: id,
+          revisionNumber: nextRevisionNumber,
+          sectionPath: targetSuggestion.sectionPath
+        }
+      });
+
+      res.json({ 
+        message: 'Suggestion applied successfully',
+        revision,
+        suggestion: { ...targetSuggestion, status: 'applied' }
+      });
+    } catch (error: any) {
+      console.error('Apply suggestion error:', error);
+      res.status(500).json({ error: 'Failed to apply suggestion' });
+    }
+  });
+
+  app.post('/api/admin/suggestions/:id/reject', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      // Get the suggestion
+      const suggestion = await storage.getSuggestions('');
+      const targetSuggestion = suggestion.find(s => s.id === id);
+      
+      if (!targetSuggestion) {
+        return res.status(404).json({ error: 'Suggestion not found' });
+      }
+
+      const workspace = await storage.getWorkspace(targetSuggestion.workspaceId);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Update suggestion status
+      await storage.updateSuggestion(id, {
+        status: 'rejected'
+      });
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: targetSuggestion.workspaceId,
+        type: 'suggestion_rejected',
+        payload: { 
+          suggestionId: id,
+          reason: reason || 'No reason provided',
+          sectionPath: targetSuggestion.sectionPath
+        }
+      });
+
+      res.json({ 
+        message: 'Suggestion rejected successfully',
+        suggestion: { ...targetSuggestion, status: 'rejected' }
+      });
+    } catch (error: any) {
+      console.error('Reject suggestion error:', error);
+      res.status(500).json({ error: 'Failed to reject suggestion' });
+    }
+  });
+
+  // Activity Timeline API Route
+  app.get('/api/admin/workspaces/:id/activities', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const activities = await storage.getActivities(id);
+      res.json({ activities });
+    } catch (error: any) {
+      console.error('Get activities error:', error);
+      res.status(500).json({ error: 'Failed to fetch activities' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -710,4 +1264,92 @@ function extractReferencedPatterns(response: string, issueContext: any): string[
   });
   
   return Array.from(new Set(patterns)); // Remove duplicates
+}
+
+function buildWorkspaceSystemPrompt(workspace: any, draft: any, sectionPath?: string): string {
+  return `You are an AI assistant helping with collaborative workspace content creation, specializing in Evans' zine format and system design patterns.
+
+**Current Workspace Context:**
+- Title: ${workspace.title}
+- Goal: ${workspace.goal}
+- Status: ${workspace.status}
+
+**Current Draft Status:**
+${draft ? `
+- Revision: ${draft.currentRevision}
+- Content Sections: ${(draft.content as any)?.sections?.length || 0}
+- Working Section: ${sectionPath || 'General discussion'}
+` : 'No draft available yet'}
+
+**Current Draft Content Preview:**
+${draft?.content ? JSON.stringify(draft.content as any, null, 2).substring(0, 500) + '...' : 'No content yet'}
+
+**Your Role:**
+- Help develop content following Evans' zine format patterns
+- Suggest improvements to sections, patterns, signals, and protocols
+- Generate structured content diffs when proposing changes
+- Focus on "shacks not cathedrals" philosophy (practical over complex)
+- Maintain consistency with system design patterns and field guide aesthetics
+
+**Evans' Zine Format Guidelines:**
+- Organize content into clear sections with patterns
+- Each pattern should have observable signals (3-5 items)
+- Include actionable protocols with step-by-step guidance
+- Keep descriptions comprehensive but concise
+- Ensure mobile-friendly structure
+
+When responding:
+1. Reference the current workspace goal and content
+2. Suggest specific improvements or additions
+3. Generate structured suggestions as diff operations when appropriate
+4. Ask clarifying questions about the direction or specific sections
+5. Maintain focus on practical, implementable advice`;
+}
+
+function applySuggestionDiff(content: any, diff: any): any {
+  // Simple implementation - in a real system this would be more sophisticated
+  try {
+    if (diff.operation === 'replace' && diff.path && diff.newValue) {
+      const contentCopy = JSON.parse(JSON.stringify(content));
+      const pathParts = diff.path.split('.');
+      
+      let current = contentCopy;
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        if (!current[pathParts[i]]) {
+          current[pathParts[i]] = {};
+        }
+        current = current[pathParts[i]];
+      }
+      
+      current[pathParts[pathParts.length - 1]] = diff.newValue;
+      return contentCopy;
+    }
+    
+    if (diff.operation === 'add' && diff.path && diff.newValue) {
+      const contentCopy = JSON.parse(JSON.stringify(content));
+      const pathParts = diff.path.split('.');
+      
+      let current = contentCopy;
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        if (!current[pathParts[i]]) {
+          current[pathParts[i]] = Array.isArray(diff.newValue) ? [] : {};
+        }
+        current = current[pathParts[i]];
+      }
+      
+      if (Array.isArray(current[pathParts[pathParts.length - 1]])) {
+        current[pathParts[pathParts.length - 1]].push(diff.newValue);
+      } else {
+        current[pathParts[pathParts.length - 1]] = diff.newValue;
+      }
+      
+      return contentCopy;
+    }
+    
+    // If we can't apply the diff, return original content
+    return content;
+  } catch (error) {
+    console.error('Error applying suggestion diff:', error);
+    return content;
+  }
 }

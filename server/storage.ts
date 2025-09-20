@@ -7,10 +7,28 @@ import {
   type InsertIssue,
   type ContentImport,
   type InsertContentImport,
+  type Workspace,
+  type InsertWorkspace,
+  type Draft,
+  type InsertDraft,
+  type Revision,
+  type InsertRevision,
+  type Message,
+  type InsertMessage,
+  type Suggestion,
+  type InsertSuggestion,
+  type Activity,
+  type InsertActivity,
   users,
   adminSessions,
   issues,
-  contentImports
+  contentImports,
+  workspaces,
+  drafts,
+  revisions,
+  messages,
+  suggestions,
+  activities
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -44,6 +62,35 @@ export interface IStorage {
   getContentImports(userId?: string): Promise<ContentImport[]>;
   getContentImport(id: string): Promise<ContentImport | undefined>;
   updateContentImport(id: string, updates: Partial<InsertContentImport>): Promise<ContentImport | undefined>;
+
+  // Workspace methods
+  createWorkspace(workspace: InsertWorkspace): Promise<Workspace>;
+  getWorkspaces(userId: string): Promise<Workspace[]>;
+  getWorkspace(id: string): Promise<Workspace | undefined>;
+  updateWorkspace(id: string, updates: Partial<InsertWorkspace>): Promise<Workspace | undefined>;
+  deleteWorkspace(id: string): Promise<boolean>;
+
+  // Draft methods
+  createDraft(draft: InsertDraft): Promise<Draft>;
+  getDraft(workspaceId: string): Promise<Draft | undefined>;
+  updateDraft(workspaceId: string, updates: Partial<InsertDraft>): Promise<Draft | undefined>;
+
+  // Revision methods
+  createRevision(revision: InsertRevision): Promise<Revision>;
+  getRevisions(workspaceId: string): Promise<Revision[]>;
+
+  // Message methods
+  createMessage(message: InsertMessage): Promise<Message>;
+  getMessages(workspaceId: string): Promise<Message[]>;
+
+  // Suggestion methods
+  createSuggestion(suggestion: InsertSuggestion): Promise<Suggestion>;
+  getSuggestions(workspaceId: string): Promise<Suggestion[]>;
+  updateSuggestion(id: string, updates: Partial<InsertSuggestion>): Promise<Suggestion | undefined>;
+
+  // Activity methods
+  createActivity(activity: InsertActivity): Promise<Activity>;
+  getActivities(workspaceId: string): Promise<Activity[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -51,12 +98,24 @@ export class MemStorage implements IStorage {
   private adminSessions: Map<string, AdminSession>;
   private issues: Map<string, Issue>;
   private contentImports: Map<string, ContentImport>;
+  private workspaces: Map<string, Workspace>;
+  private drafts: Map<string, Draft>;
+  private revisions: Map<string, Revision>;
+  private messages: Map<string, Message>;
+  private suggestions: Map<string, Suggestion>;
+  private activities: Map<string, Activity>;
 
   constructor() {
     this.users = new Map();
     this.adminSessions = new Map();
     this.issues = new Map();
     this.contentImports = new Map();
+    this.workspaces = new Map();
+    this.drafts = new Map();
+    this.revisions = new Map();
+    this.messages = new Map();
+    this.suggestions = new Map();
+    this.activities = new Map();
   }
 
   // User methods
@@ -217,6 +276,166 @@ export class MemStorage implements IStorage {
     this.contentImports.set(id, updatedImport);
     return updatedImport;
   }
+
+  // Workspace methods
+  async createWorkspace(insertWorkspace: InsertWorkspace): Promise<Workspace> {
+    const id = randomUUID();
+    const workspace: Workspace = {
+      ...insertWorkspace,
+      id,
+      status: insertWorkspace.status || 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.workspaces.set(id, workspace);
+    return workspace;
+  }
+
+  async getWorkspaces(userId: string): Promise<Workspace[]> {
+    return Array.from(this.workspaces.values())
+      .filter(workspace => workspace.userId === userId)
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  }
+
+  async getWorkspace(id: string): Promise<Workspace | undefined> {
+    return this.workspaces.get(id);
+  }
+
+  async updateWorkspace(id: string, updates: Partial<InsertWorkspace>): Promise<Workspace | undefined> {
+    const workspace = this.workspaces.get(id);
+    if (!workspace) return undefined;
+
+    const updatedWorkspace: Workspace = {
+      ...workspace,
+      ...updates,
+      updatedAt: new Date()
+    };
+    this.workspaces.set(id, updatedWorkspace);
+    return updatedWorkspace;
+  }
+
+  async deleteWorkspace(id: string): Promise<boolean> {
+    return this.workspaces.delete(id);
+  }
+
+  // Draft methods
+  async createDraft(insertDraft: InsertDraft): Promise<Draft> {
+    const id = randomUUID();
+    const draft: Draft = {
+      ...insertDraft,
+      id,
+      currentRevision: insertDraft.currentRevision || 1,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.drafts.set(id, draft);
+    return draft;
+  }
+
+  async getDraft(workspaceId: string): Promise<Draft | undefined> {
+    return Array.from(this.drafts.values()).find(draft => draft.workspaceId === workspaceId);
+  }
+
+  async updateDraft(workspaceId: string, updates: Partial<InsertDraft>): Promise<Draft | undefined> {
+    const draft = Array.from(this.drafts.values()).find(d => d.workspaceId === workspaceId);
+    if (!draft) return undefined;
+
+    const updatedDraft: Draft = {
+      ...draft,
+      ...updates,
+      updatedAt: new Date()
+    };
+    this.drafts.set(draft.id, updatedDraft);
+    return updatedDraft;
+  }
+
+  // Revision methods
+  async createRevision(insertRevision: InsertRevision): Promise<Revision> {
+    const id = randomUUID();
+    const revision: Revision = {
+      ...insertRevision,
+      id,
+      createdAt: new Date()
+    };
+    this.revisions.set(id, revision);
+    return revision;
+  }
+
+  async getRevisions(workspaceId: string): Promise<Revision[]> {
+    return Array.from(this.revisions.values())
+      .filter(revision => revision.workspaceId === workspaceId)
+      .sort((a, b) => b.number - a.number);
+  }
+
+  // Message methods
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const id = randomUUID();
+    const message: Message = {
+      ...insertMessage,
+      id,
+      sectionPath: insertMessage.sectionPath || null,
+      metadata: insertMessage.metadata || null,
+      createdAt: new Date()
+    };
+    this.messages.set(id, message);
+    return message;
+  }
+
+  async getMessages(workspaceId: string): Promise<Message[]> {
+    return Array.from(this.messages.values())
+      .filter(message => message.workspaceId === workspaceId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  // Suggestion methods
+  async createSuggestion(insertSuggestion: InsertSuggestion): Promise<Suggestion> {
+    const id = randomUUID();
+    const suggestion: Suggestion = {
+      ...insertSuggestion,
+      id,
+      sectionPath: insertSuggestion.sectionPath || null,
+      status: insertSuggestion.status || 'proposed',
+      createdAt: new Date()
+    };
+    this.suggestions.set(id, suggestion);
+    return suggestion;
+  }
+
+  async getSuggestions(workspaceId: string): Promise<Suggestion[]> {
+    return Array.from(this.suggestions.values())
+      .filter(suggestion => suggestion.workspaceId === workspaceId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async updateSuggestion(id: string, updates: Partial<InsertSuggestion>): Promise<Suggestion | undefined> {
+    const suggestion = this.suggestions.get(id);
+    if (!suggestion) return undefined;
+
+    const updatedSuggestion: Suggestion = {
+      ...suggestion,
+      ...updates
+    };
+    this.suggestions.set(id, updatedSuggestion);
+    return updatedSuggestion;
+  }
+
+  // Activity methods
+  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
+    const id = randomUUID();
+    const activity: Activity = {
+      ...insertActivity,
+      id,
+      createdAt: new Date()
+    };
+    this.activities.set(id, activity);
+    return activity;
+  }
+
+  async getActivities(workspaceId: string): Promise<Activity[]> {
+    return Array.from(this.activities.values())
+      .filter(activity => activity.workspaceId === workspaceId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
 }
 
 export class DbStorage implements IStorage {
@@ -373,6 +592,149 @@ export class DbStorage implements IStorage {
       .where(eq(contentImports.id, id))
       .returning();
     return result[0];
+  }
+
+  // Workspace methods
+  async createWorkspace(insertWorkspace: InsertWorkspace): Promise<Workspace> {
+    const result = await db.insert(workspaces).values({
+      ...insertWorkspace,
+      status: insertWorkspace.status || 'active'
+    }).returning();
+    return result[0];
+  }
+
+  async getWorkspaces(userId: string): Promise<Workspace[]> {
+    const result = await db.select()
+      .from(workspaces)
+      .where(eq(workspaces.userId, userId))
+      .orderBy(desc(workspaces.updatedAt));
+    return result;
+  }
+
+  async getWorkspace(id: string): Promise<Workspace | undefined> {
+    const result = await db.select()
+      .from(workspaces)
+      .where(eq(workspaces.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateWorkspace(id: string, updates: Partial<InsertWorkspace>): Promise<Workspace | undefined> {
+    const result = await db.update(workspaces)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(workspaces.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteWorkspace(id: string): Promise<boolean> {
+    const result = await db.delete(workspaces)
+      .where(eq(workspaces.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Draft methods
+  async createDraft(insertDraft: InsertDraft): Promise<Draft> {
+    const result = await db.insert(drafts).values({
+      ...insertDraft,
+      currentRevision: insertDraft.currentRevision || 1
+    }).returning();
+    return result[0];
+  }
+
+  async getDraft(workspaceId: string): Promise<Draft | undefined> {
+    const result = await db.select()
+      .from(drafts)
+      .where(eq(drafts.workspaceId, workspaceId))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateDraft(workspaceId: string, updates: Partial<InsertDraft>): Promise<Draft | undefined> {
+    const result = await db.update(drafts)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(drafts.workspaceId, workspaceId))
+      .returning();
+    return result[0];
+  }
+
+  // Revision methods
+  async createRevision(insertRevision: InsertRevision): Promise<Revision> {
+    const result = await db.insert(revisions).values(insertRevision).returning();
+    return result[0];
+  }
+
+  async getRevisions(workspaceId: string): Promise<Revision[]> {
+    const result = await db.select()
+      .from(revisions)
+      .where(eq(revisions.workspaceId, workspaceId))
+      .orderBy(desc(revisions.number));
+    return result;
+  }
+
+  // Message methods
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const result = await db.insert(messages).values({
+      ...insertMessage,
+      sectionPath: insertMessage.sectionPath || null,
+      metadata: insertMessage.metadata || null
+    }).returning();
+    return result[0];
+  }
+
+  async getMessages(workspaceId: string): Promise<Message[]> {
+    const result = await db.select()
+      .from(messages)
+      .where(eq(messages.workspaceId, workspaceId))
+      .orderBy(messages.createdAt);
+    return result;
+  }
+
+  // Suggestion methods
+  async createSuggestion(insertSuggestion: InsertSuggestion): Promise<Suggestion> {
+    const result = await db.insert(suggestions).values({
+      ...insertSuggestion,
+      sectionPath: insertSuggestion.sectionPath || null,
+      status: insertSuggestion.status || 'proposed'
+    }).returning();
+    return result[0];
+  }
+
+  async getSuggestions(workspaceId: string): Promise<Suggestion[]> {
+    const result = await db.select()
+      .from(suggestions)
+      .where(eq(suggestions.workspaceId, workspaceId))
+      .orderBy(desc(suggestions.createdAt));
+    return result;
+  }
+
+  async updateSuggestion(id: string, updates: Partial<InsertSuggestion>): Promise<Suggestion | undefined> {
+    const result = await db.update(suggestions)
+      .set(updates)
+      .where(eq(suggestions.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Activity methods
+  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
+    const result = await db.insert(activities).values(insertActivity).returning();
+    return result[0];
+  }
+
+  async getActivities(workspaceId: string): Promise<Activity[]> {
+    const result = await db.select()
+      .from(activities)
+      .where(eq(activities.workspaceId, workspaceId))
+      .orderBy(desc(activities.createdAt));
+    return result;
   }
 }
 
