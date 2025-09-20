@@ -6,9 +6,15 @@ import {
   type Issue,
   type InsertIssue,
   type ContentImport,
-  type InsertContentImport
+  type InsertContentImport,
+  users,
+  adminSessions,
+  issues,
+  contentImports
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, desc, lt } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -213,4 +219,161 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DbStorage implements IStorage {
+  // User methods
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    return result[0];
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await db.insert(users).values({
+      ...insertUser,
+      isAdmin: insertUser.isAdmin || false
+    }).returning();
+    return result[0];
+  }
+
+  async updateUserAdminStatus(id: string, isAdmin: boolean): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({ isAdmin })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Admin session methods
+  async createAdminSession(session: InsertAdminSession): Promise<AdminSession> {
+    const result = await db.insert(adminSessions).values(session).returning();
+    return result[0];
+  }
+
+  async getAdminSession(token: string): Promise<AdminSession | undefined> {
+    const now = new Date();
+    const result = await db.select()
+      .from(adminSessions)
+      .where(eq(adminSessions.token, token))
+      .limit(1);
+    
+    if (!result[0]) return undefined;
+    
+    // Check if session is expired
+    if (result[0].expiresAt < now) {
+      await this.deleteAdminSession(token);
+      return undefined;
+    }
+    
+    return result[0];
+  }
+
+  async deleteAdminSession(token: string): Promise<boolean> {
+    const result = await db.delete(adminSessions)
+      .where(eq(adminSessions.token, token))
+      .returning();
+    return result.length > 0;
+  }
+
+  async cleanExpiredSessions(): Promise<number> {
+    const now = new Date();
+    const result = await db.delete(adminSessions)
+      .where(lt(adminSessions.expiresAt, now))
+      .returning();
+    return result.length;
+  }
+
+  // Issues methods
+  async getIssues(): Promise<Issue[]> {
+    const result = await db.select()
+      .from(issues)
+      .orderBy(desc(issues.publishedAt));
+    return result;
+  }
+
+  async getIssue(slug: string): Promise<Issue | undefined> {
+    const result = await db.select()
+      .from(issues)
+      .where(eq(issues.slug, slug))
+      .limit(1);
+    return result[0];
+  }
+
+  async createIssue(issue: InsertIssue): Promise<Issue> {
+    const result = await db.insert(issues).values({
+      ...issue,
+      subtitle: issue.subtitle || null,
+      tagline: issue.tagline || null,
+      intro: issue.intro || null,
+      metadata: issue.metadata || null,
+      publishedAt: issue.publishedAt || null
+    }).returning();
+    return result[0];
+  }
+
+  async updateIssue(slug: string, updates: Partial<InsertIssue>): Promise<Issue | undefined> {
+    const result = await db.update(issues)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(issues.slug, slug))
+      .returning();
+    return result[0];
+  }
+
+  async deleteIssue(slug: string): Promise<boolean> {
+    const result = await db.delete(issues)
+      .where(eq(issues.slug, slug))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Content import methods
+  async createContentImport(contentImport: InsertContentImport): Promise<ContentImport> {
+    const result = await db.insert(contentImports).values({
+      ...contentImport,
+      status: contentImport.status || 'pending',
+      metadata: contentImport.metadata || null,
+      transformedContent: contentImport.transformedContent || null,
+      issueSlug: contentImport.issueSlug || null
+    }).returning();
+    return result[0];
+  }
+
+  async getContentImports(userId?: string): Promise<ContentImport[]> {
+    if (userId) {
+      const result = await db.select()
+        .from(contentImports)
+        .where(eq(contentImports.userId, userId))
+        .orderBy(desc(contentImports.createdAt));
+      return result;
+    }
+    
+    const result = await db.select()
+      .from(contentImports)
+      .orderBy(desc(contentImports.createdAt));
+    return result;
+  }
+
+  async getContentImport(id: string): Promise<ContentImport | undefined> {
+    const result = await db.select()
+      .from(contentImports)
+      .where(eq(contentImports.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateContentImport(id: string, updates: Partial<InsertContentImport>): Promise<ContentImport | undefined> {
+    const result = await db.update(contentImports)
+      .set(updates)
+      .where(eq(contentImports.id, id))
+      .returning();
+    return result[0];
+  }
+}
+
+export const storage = new DbStorage();
