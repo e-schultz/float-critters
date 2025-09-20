@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { LayoutShell } from "@/components/layout/LayoutShell";
@@ -11,403 +11,393 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader, Upload, FileText, Code, Sparkles, Eye, Save, AlertCircle } from "lucide-react";
+import { Loader, Upload, FileText, Code, Users, Eye, MessageCircle, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+const createWorkspaceSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  goal: z.string().min(1, "Goal is required").max(500, "Goal must be less than 500 characters"),
+  content: z.string().min(1, "Initial content is required"),
+  contentType: z.enum(["text", "file", "artifact"]).default("text")
+});
+
+type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
 
 export default function AdminImport() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("text");
   const [content, setContent] = useState("");
-  const [isTransforming, setIsTransforming] = useState(false);
-  const [transformedContent, setTransformedContent] = useState<any>(null);
-  const [transformProgress, setTransformProgress] = useState(0);
-  const [isValid, setIsValid] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [creationProgress, setCreationProgress] = useState(0);
+  
+  const form = useForm<CreateWorkspaceFormData>({
+    resolver: zodResolver(createWorkspaceSchema),
+    defaultValues: {
+      title: "",
+      goal: "",
+      content: "",
+      contentType: "text"
+    },
+    mode: 'onChange'
+  });
 
-  const handleTransform = async () => {
-    if (!content.trim()) {
-      toast({
-        title: "Content Required",
-        description: "Please enter some content to transform.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsTransforming(true);
-    setTransformProgress(0);
+  const handleCreateWorkspace = async (formData: CreateWorkspaceFormData) => {
+    setIsCreating(true);
+    setCreationProgress(0);
     
     try {
+      setCreationProgress(20);
+      
+      // Create the workspace with initial content
       const token = localStorage.getItem('admin-token');
-      const response = await fetch('/api/admin/transform-content', {
+      const workspaceResponse = await fetch('/api/admin/workspaces', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          content,
-          contentType: activeTab,
-          targetFormat: 'zine-issue'
+          title: formData.title,
+          goal: formData.goal,
+          rawContent: formData.content,
+          contentType: formData.contentType
         })
       });
-
-      if (!response.ok) {
-        throw new Error('Transformation failed');
+      
+      if (!workspaceResponse.ok) {
+        const errorData = await workspaceResponse.json();
+        throw new Error(errorData.error || 'Failed to create workspace');
       }
-
-      if (!response.body) {
-        throw new Error('No response body');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullResponse = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              setTransformProgress(100);
-              break;
-            }
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                fullResponse += parsed.content;
-                // Update progress based on content length
-                const estimatedProgress = Math.min(95, (fullResponse.length / 2000) * 100);
-                setTransformProgress(estimatedProgress);
-              }
-              if (parsed.complete && parsed.valid !== undefined) {
-                setIsValid(parsed.valid);
-              }
-            } catch (e) {
-              // Ignore parsing errors for streaming chunks
-            }
-          }
-        }
-      }
-
-      try {
-        const parsedContent = JSON.parse(fullResponse);
-        setTransformedContent(parsedContent);
-        toast({
-          title: "Content Transformed",
-          description: "Your content has been successfully transformed into zine format.",
-        });
-      } catch (error) {
-        // If parsing fails, still show the content for manual review
-        setTransformedContent({ raw: fullResponse });
-        setIsValid(false);
-        toast({
-          title: "Transformation Complete",
-          description: "Content transformed but may need manual review.",
-          variant: "destructive"
-        });
-      }
-
-    } catch (error: any) {
-      console.error('Transform error:', error);
-      toast({
-        title: "Transform Failed",
-        description: error.message || "An error occurred during transformation.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsTransforming(false);
-    }
-  };
-
-  const handlePublish = async () => {
-    if (!transformedContent || !isValid) {
-      toast({
-        title: "Cannot Publish",
-        description: "Please ensure the content is valid before publishing.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('admin-token');
-      const response = await fetch('/api/admin/issues', {
+      
+      const { workspace } = await workspaceResponse.json();
+      setCreationProgress(50);
+      
+      // Send initial AI message to start collaboration
+      const initialMessage = `I've created a new workspace titled "${formData.title}" with the goal: ${formData.goal}\n\nHere's the initial content to work with:\n\n${formData.content}\n\nLet's start collaborating! What should we focus on first to achieve your goal?`;
+      
+      const chatResponse = await fetch(`/api/admin/workspaces/${workspace.id}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(transformedContent)
+        body: JSON.stringify({
+          message: initialMessage
+        })
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to publish issue');
+      
+      setCreationProgress(85);
+      
+      if (chatResponse.ok) {
+        // Consume the streaming response to complete the AI message
+        const reader = chatResponse.body?.getReader();
+        if (reader) {
+          let done = false;
+          while (!done) {
+            const { done: streamDone } = await reader.read();
+            done = streamDone;
+          }
+        }
       }
-
-      const { issue } = await response.json();
+      
+      setCreationProgress(100);
+      
+      // Invalidate workspaces cache to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/workspaces'] });
+      
       toast({
-        title: "Issue Published",
-        description: `Successfully created issue: ${issue.title}`,
+        title: "Workspace Created",
+        description: `Successfully created "${workspace.title}" and started AI collaboration.`,
       });
-
-      // Redirect to content management or the new issue
-      setLocation('/admin/content');
+      
+      // Redirect to the workspace editor
+      setTimeout(() => {
+        setLocation(`/admin/workspaces/${workspace.id}`);
+      }, 1500);
+      
     } catch (error: any) {
-      console.error('Publish error:', error);
+      console.error('Workspace creation error:', error);
       toast({
-        title: "Publish Failed",
-        description: error.message || "Failed to publish the issue.",
+        title: "Creation Failed",
+        description: error.message || "Failed to create workspace. Please try again.",
         variant: "destructive"
       });
+      setIsCreating(false);
     }
+  };
+
+  // Update content when form changes
+  const watchedContent = form.watch("content");
+  const watchedContentType = form.watch("contentType");
+  
+  // Sync form content with local content state
+  React.useEffect(() => {
+    if (content !== watchedContent) {
+      form.setValue("content", content, { shouldValidate: true });
+    }
+  }, [content, watchedContent, form]);
+  
+  React.useEffect(() => {
+    if (activeTab !== watchedContentType) {
+      form.setValue("contentType", activeTab as "text" | "file" | "artifact", { shouldValidate: true });
+    }
+  }, [activeTab, watchedContentType, form]);
+  
+  const onSubmit = (data: CreateWorkspaceFormData) => {
+    handleCreateWorkspace(data);
   };
 
   return (
     <LayoutShell 
       breadcrumb={[
         { label: "Admin", href: "/admin" },
-        { label: "Import Content", href: "/admin/import" }
+        { label: "Create Workspace", href: "/admin/import" }
       ]}
     >
       <AdminLayout>
         <div className="max-w-6xl mx-auto space-y-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Import Content</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Create Workspace</h1>
             <p className="text-muted-foreground">
-              Transform raw content into structured Field Guide Zine format using AI.
+              Start a collaborative AI-powered workspace to develop and refine your content together.
             </p>
           </div>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
-          <div className="grid gap-8 lg:grid-cols-2">
-            {/* Input Section */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Upload className="w-5 h-5 mr-2" />
-                    Content Input
-                  </CardTitle>
-                  <CardDescription>
-                    Paste or upload content to transform into zine format
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="text" data-testid="tab-text">
-                        <FileText className="w-4 h-4 mr-2" />
-                        Text
-                      </TabsTrigger>
-                      <TabsTrigger value="file" data-testid="tab-file">
-                        <Upload className="w-4 h-4 mr-2" />
-                        File
-                      </TabsTrigger>
-                      <TabsTrigger value="artifact" data-testid="tab-artifact">
-                        <Code className="w-4 h-4 mr-2" />
-                        Artifact
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="text" className="space-y-4">
-                      <Label htmlFor="content">Raw Content</Label>
-                      <Textarea
-                        id="content"
-                        placeholder="Paste your raw content here... This could be notes, articles, documentation, or any text you want to transform into a zine format."
-                        className="min-h-[300px]"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        data-testid="textarea-content"
+              <div className="grid gap-8 lg:grid-cols-2">
+                {/* Workspace Setup Section */}
+                <div className="space-y-6">
+                  {/* Workspace Details */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Users className="w-5 h-5 mr-2" />
+                        Workspace Details
+                      </CardTitle>
+                      <CardDescription>
+                        Define your collaborative workspace and its purpose
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="title"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Workspace Title</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter a descriptive title for your workspace"
+                                data-testid="input-workspace-title"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </TabsContent>
-                    
-                    <TabsContent value="file" className="space-y-4">
-                      <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                        <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground mb-4">
-                          Drag and drop files here, or click to browse
-                        </p>
-                        <Input
-                          type="file"
-                          accept=".txt,.md,.json"
-                          className="hidden"
-                          id="file-upload"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (e) => {
-                                setContent(e.target?.result as string);
-                              };
-                              reader.readAsText(file);
-                            }
-                          }}
-                          data-testid="input-file-upload"
-                        />
-                        <Label htmlFor="file-upload">
-                          <Button variant="outline" className="cursor-pointer" data-testid="button-browse-files">
-                            Browse Files
-                          </Button>
-                        </Label>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="artifact" className="space-y-4">
-                      <Label htmlFor="artifact-content">Artifact Content (JSON/Markdown)</Label>
-                      <Textarea
-                        id="artifact-content"
-                        placeholder="Paste artifact content here..."
-                        className="min-h-[300px] font-mono text-sm"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        data-testid="textarea-artifact-content"
+                      <FormField
+                        control={form.control}
+                        name="goal"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Goal & Objective</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Describe what you want to accomplish in this workspace. What's your vision for the final content?"
+                                className="min-h-[100px]"
+                                data-testid="textarea-workspace-goal"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </TabsContent>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Initial Content */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Target className="w-5 h-5 mr-2" />
+                        Initial Content
+                      </CardTitle>
+                      <CardDescription>
+                        Provide starting content for AI collaboration - this will seed your first conversation
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Tabs value={activeTab} onValueChange={setActiveTab}>
+                        <TabsList className="grid w-full grid-cols-3">
+                          <TabsTrigger value="text" data-testid="tab-text">
+                            <FileText className="w-4 h-4 mr-2" />
+                            Text
+                          </TabsTrigger>
+                          <TabsTrigger value="file" data-testid="tab-file">
+                            <Upload className="w-4 h-4 mr-2" />
+                            File
+                          </TabsTrigger>
+                          <TabsTrigger value="artifact" data-testid="tab-artifact">
+                            <Code className="w-4 h-4 mr-2" />
+                            Artifact
+                          </TabsTrigger>
+                        </TabsList>
+                    
+                        <TabsContent value="text" className="space-y-4">
+                          <Label htmlFor="content">Starting Content</Label>
+                          <Textarea
+                            id="content"
+                            placeholder="Share your ideas, notes, research, or any content you'd like to develop collaboratively with AI. This will start your conversation..."
+                            className="min-h-[300px]"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            data-testid="textarea-content"
+                          />
+                        </TabsContent>
+                    
+                        <TabsContent value="file" className="space-y-4">
+                          <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                            <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                            <p className="text-muted-foreground mb-4">
+                              Upload documents, notes, or research to kickstart your workspace
+                            </p>
+                            <Input
+                              type="file"
+                              accept=".txt,.md,.json"
+                              className="hidden"
+                              id="file-upload"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (e) => {
+                                    setContent(e.target?.result as string);
+                                  };
+                                  reader.readAsText(file);
+                                }
+                              }}
+                              data-testid="input-file-upload"
+                            />
+                            <Label htmlFor="file-upload">
+                              <Button variant="outline" className="cursor-pointer" data-testid="button-browse-files">
+                                Browse Files
+                              </Button>
+                            </Label>
+                          </div>
+                        </TabsContent>
+                    
+                        <TabsContent value="artifact" className="space-y-4">
+                          <Label htmlFor="artifact-content">Structured Content (JSON/Markdown)</Label>
+                          <Textarea
+                            id="artifact-content"
+                            placeholder="Paste structured content, templates, or existing artifacts to build upon..."
+                            className="min-h-[300px] font-mono text-sm"
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            data-testid="textarea-artifact-content"
+                          />
+                        </TabsContent>
                   </Tabs>
 
-                  <Button
-                    onClick={handleTransform}
-                    disabled={!content.trim() || isTransforming}
-                    className="w-full"
-                    data-testid="button-transform-content"
-                  >
-                    {isTransforming ? (
-                      <>
-                        <Loader className="w-4 h-4 mr-2 animate-spin" />
-                        Transforming...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Transform with AI
-                      </>
-                    )}
-                  </Button>
-                  
-                  {isTransforming && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Transforming content...</span>
-                        <span>{Math.round(transformProgress)}%</span>
-                      </div>
-                      <Progress value={transformProgress} className="w-full" />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Preview Section */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Eye className="w-5 h-5 mr-2" />
-                      Preview
-                    </div>
-                    {transformedContent && (
-                      <Badge variant={isValid ? "default" : "destructive"}>
-                        {isValid ? "Valid" : "Needs Review"}
-                      </Badge>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    Preview of your transformed content
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {!transformedContent ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Eye className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Transform content to see preview</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {!isValid && (
-                        <Alert>
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>
-                            The transformed content may need manual review before publishing.
-                          </AlertDescription>
-                        </Alert>
-                      )}
+                      <Button
+                        type="submit"
+                        disabled={isCreating || !form.formState.isValid}
+                        className="w-full"
+                        data-testid="button-start-collaborating"
+                      >
+                        {isCreating ? (
+                          <>
+                            <Loader className="w-4 h-4 mr-2 animate-spin" />
+                            Creating Workspace...
+                          </>
+                        ) : (
+                          <>
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Start Collaborating
+                          </>
+                        )}
+                      </Button>
                       
-                      <div className="space-y-4">
-                        {transformedContent.title && (
-                          <div>
-                            <h3 className="text-xl font-bold">{transformedContent.title}</h3>
-                            {transformedContent.subtitle && (
-                              <p className="text-muted-foreground">{transformedContent.subtitle}</p>
-                            )}
-                            <div className="flex items-center space-x-4 mt-2">
-                              {transformedContent.version && (
-                                <Badge variant="outline">{transformedContent.version}</Badge>
-                              )}
-                              {transformedContent.tagline && (
-                                <span className="text-sm text-muted-foreground italic">
-                                  "{transformedContent.tagline}"
-                                </span>
+                      {isCreating && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Setting up your collaborative workspace...</span>
+                            <span>{Math.round(creationProgress)}%</span>
+                          </div>
+                          <Progress value={creationProgress} className="w-full" />
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Workspace Preview Section */}
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Eye className="w-5 h-5 mr-2" />
+                        Workspace Preview
+                      </CardTitle>
+                      <CardDescription>
+                        How your collaborative workspace will be set up
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {!form.watch("title") && !content.trim() ? (
+                        <div className="text-center py-12 text-muted-foreground">
+                          <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>Fill in workspace details to see preview</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          {form.watch("title") && (
+                            <div>
+                              <h3 className="text-xl font-bold">{form.watch("title")}</h3>
+                              {form.watch("goal") && (
+                                <p className="text-muted-foreground mt-2">{form.watch("goal")}</p>
                               )}
                             </div>
+                          )}
+                          
+                          {content.trim() && (
+                            <div>
+                              <h4 className="font-semibold mb-2">Initial Content ({activeTab})</h4>
+                              <div className="bg-muted p-4 rounded-lg">
+                                <p className="text-sm text-muted-foreground truncate">
+                                  {content.slice(0, 150)}{content.length > 150 ? '...' : ''}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="border-l-4 border-blue-500 pl-4">
+                            <h4 className="font-semibold text-blue-700">What happens next?</h4>
+                            <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+                              <li>• AI will analyze your content and start a conversation</li>
+                              <li>• You'll collaborate to refine and develop ideas</li>
+                              <li>• Content evolves through iterative discussion</li>
+                              <li>• Final content emerges from your collaboration</li>
+                            </ul>
                           </div>
-                        )}
-                        
-                        {transformedContent.intro && (
-                          <div className="prose dark:prose-invert">
-                            <p>{transformedContent.intro}</p>
-                          </div>
-                        )}
-                        
-                        {transformedContent.sections && (
-                          <div className="space-y-4">
-                            <h4 className="font-semibold">Sections</h4>
-                            {transformedContent.sections.map((section: any, index: number) => (
-                              <Card key={index} className="bg-muted/50">
-                                <CardHeader className="pb-2">
-                                  <CardTitle className="text-base">{section.title}</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <div className="text-sm text-muted-foreground">
-                                    {section.entries?.length || 0} patterns
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex space-x-3">
-                        <Button
-                          variant="outline"
-                          onClick={() => setTransformedContent(null)}
-                          data-testid="button-clear-preview"
-                        >
-                          Clear
-                        </Button>
-                        <Button
-                          onClick={handlePublish}
-                          disabled={!isValid}
-                          data-testid="button-publish-content"
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          Publish Issue
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </form>
+          </Form>
         </div>
       </AdminLayout>
     </LayoutShell>
