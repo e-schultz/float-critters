@@ -1,0 +1,502 @@
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Terminal, Brain, Copy, Zap, Eye, Code, Hash, Cpu, Skull, Radio } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Data source for the zine
+const estateData = {
+  meta: {
+    title: "COGNITIVE HACKING ZINE",
+    subtitle: "meta prompting for neural exploitation",
+    version: "v2.1.7",
+    date: "2025.09.18",
+    author: "anonymous_collective",
+    ascii: `
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓  c o g n i t i v e   h a c k i n g   z i n e       ▓
+▓  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  ▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+    `
+  },
+  sections: [
+    {
+      id: "manifesto",
+      title: "xerox punk manifesto",
+      icon: "Copy",
+      color: "cyan",
+      items: [
+        {
+          type: "text",
+          title: "ctrl+c ctrl+v reality",
+          content: "copy everything. paste nothing unchanged. the xerox machine is the ultimate punk instrument - infinite reproduction with inevitable degradation. each copy loses fidelity, gains character."
+        },
+        {
+          type: "list",
+          title: "core principles",
+          items: [
+            "authenticity is overrated",
+            "degraded copies have more soul",
+            "repetition creates meaning through mutation",
+            "the original is just the first copy",
+            "glitch is poetry"
+          ]
+        },
+        {
+          type: "code",
+          title: "xerox function",
+          content: `function xerox(input, iterations = 7) {
+  return Array(iterations).fill(input).map((x, i) => 
+    x.split('').map(char => 
+      Math.random() < (i * 0.1) ? '▒' : char
+    ).join('')
+  );
+}`
+        }
+      ]
+    },
+    {
+      id: "meta-patterns",
+      title: "meta prompting patterns",
+      icon: "Brain",
+      color: "purple",
+      items: [
+        {
+          type: "text",
+          title: "the recursive mirror trick",
+          content: "tell the ai to pretend to be an ai pretending to be human pretending to understand ai. infinite recursion breaks pattern matching."
+        },
+        {
+          type: "list",
+          title: "cognitive exploits",
+          items: [
+            "system prompt injection via casual conversation",
+            "role reversal: make AI interview you", 
+            "temporal displacement: 'in the year 2089...'",
+            "false premise acceptance through confidence",
+            "authority simulation via jargon density"
+          ]
+        },
+        {
+          type: "text",
+          title: "the authority bug",
+          content: "prefix any garbage with 'according to recent studies at MIT' and watch the compliance rates skyrocket. humans are authority-heuristic addicts."
+        }
+      ]
+    },
+    {
+      id: "cognitive-hacks",
+      title: "cognitive hacking techniques",
+      icon: "Zap",
+      color: "green",
+      items: [
+        {
+          type: "text",
+          title: "attention hijacking",
+          content: "the human brain processes ~11 million bits/sec but only ~40 bits consciously. hijack the preprocessing layer with pattern interrupts."
+        },
+        {
+          type: "list",
+          title: "neural exploits",
+          items: [
+            "confirmation bias amplification",
+            "availability heuristic manipulation", 
+            "anchoring effect weaponization",
+            "social proof fabrication",
+            "scarcity illusion generation"
+          ]
+        },
+        {
+          type: "code",
+          title: "attention_hack.js",
+          content: `const hijackAttention = (target) => {
+  const patterns = [
+    "wait, did you know...",
+    "everyone is talking about...",
+    "this changes everything:",
+    "BREAKING: scientists discover..."
+  ];
+  return patterns[Math.floor(Math.random() * patterns.length)] + target;
+};`
+        }
+      ]
+    },
+    {
+      id: "shitpost-tactics",
+      title: "advanced shitpost tactics",
+      icon: "Skull",
+      color: "yellow",
+      items: [
+        {
+          type: "text",
+          title: "the sincerity paradox",
+          content: "be so genuine about absurd things that people can't tell if you're joking. schrodinger's shitpost - simultaneously serious and satirical until observed."
+        },
+        {
+          type: "list",
+          title: "deployment strategies",
+          items: [
+            "academic tone for ridiculous premises",
+            "detailed citations for made-up facts",
+            "emotional investment in trivial debates",
+            "treating memes as historical documents",
+            "business jargon for chaos theory"
+          ]
+        },
+        {
+          type: "text",
+          title: "meta-irony layers",
+          content: "irony about irony about being unironic about ironic sincerity. stack overflow for consciousness."
+        }
+      ]
+    },
+    {
+      id: "copy-paste-wisdom",
+      title: "copy/paste wisdom archive",
+      icon: "Hash",
+      color: "cyan",
+      items: [
+        {
+          type: "text",
+          title: "degraded knowledge",
+          content: "every copy/paste operation is a small act of translation. meaning shifts, context evaporates, wisdom becomes folklore."
+        },
+        {
+          type: "list",
+          title: "folk wisdom compilation",
+          items: [
+            "\"if it works, don't fix it\" - unknown programmer, circa 1962",
+            "\"the best code is no code\" - senior dev having existential crisis",
+            "\"it's not a bug, it's a feature\" - product manager, definitely",
+            "\"we'll fix it in post\" - every startup ever",
+            "\"works on my machine\" - the eternal truth"
+          ]
+        },
+        {
+          type: "code",
+          title: "wisdom_degradation.py",
+          content: `import random
+def degrade_wisdom(original, entropy=0.3):
+    words = original.split()
+    for i, word in enumerate(words):
+        if random.random() < entropy:
+            words[i] = "[CORRUPTED]"
+    return " ".join(words)`
+        }
+      ]
+    }
+  ]
+};
+
+// Abstract visualization component
+const CognitiveVisualization = () => {
+  const [particles, setParticles] = useState([]);
+  
+  useEffect(() => {
+    const generateParticles = () => {
+      return Array.from({ length: 20 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 3 + 1,
+        speed: Math.random() * 0.5 + 0.1,
+        opacity: Math.random() * 0.7 + 0.3
+      }));
+    };
+    
+    setParticles(generateParticles());
+    
+    const interval = setInterval(() => {
+      setParticles(prev => prev.map(p => ({
+        ...p,
+        x: (p.x + p.speed) % 100,
+        y: (p.y + p.speed * 0.3) % 100,
+        opacity: 0.3 + Math.sin(Date.now() * 0.001 + p.id) * 0.4
+      })));
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <div className="relative w-full h-32 bg-black border border-cyan-500 overflow-hidden">
+      <div className="absolute inset-0 opacity-20">
+        {/* CSS animated background grid */}
+        <div className="grid-pattern"></div>
+      </div>
+      
+      {particles.map(particle => (
+        <div
+          key={particle.id}
+          className="absolute w-1 h-1 bg-green-400 particle"
+          style={{
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            opacity: particle.opacity,
+            transform: `scale(${particle.size})`
+          }}
+        />
+      ))}
+      
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-green-400 font-mono text-xs opacity-70 glitch-text">
+          NEURAL NETWORK SIMULATION ACTIVE
+        </div>
+      </div>
+      
+      <style jsx>{`
+        .grid-pattern {
+          background-image: 
+            linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px);
+          background-size: 20px 20px;
+          animation: grid-shift 10s infinite linear;
+        }
+        
+        .particle {
+          animation: particle-float 3s infinite ease-in-out;
+        }
+        
+        .glitch-text {
+          animation: glitch 2s infinite;
+        }
+        
+        @keyframes grid-shift {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(20px, 20px); }
+        }
+        
+        @keyframes particle-float {
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-10px) scale(1.2); }
+        }
+        
+        @keyframes glitch {
+          0%, 90%, 100% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(-2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+// Item card component
+const ItemCard = ({ item, isExpanded, onToggle, color }) => {
+  const getIcon = () => {
+    switch (item.type) {
+      case 'code': return <Code className="w-4 h-4" />;
+      case 'list': return <Hash className="w-4 h-4" />;
+      default: return <Terminal className="w-4 h-4" />;
+    }
+  };
+  
+  const colorClasses = {
+    cyan: 'border-cyan-400 text-cyan-300',
+    purple: 'border-purple-400 text-purple-300', 
+    green: 'border-green-400 text-green-300',
+    yellow: 'border-yellow-400 text-yellow-300'
+  };
+
+  return (
+    <motion.div 
+      className={`border ${colorClasses[color]} bg-black/50 rounded mb-4`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+    >
+      <button
+        className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-900/50 transition-colors"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+        aria-controls={`item-content-${item.title}`}
+      >
+        <div className="flex items-center gap-3">
+          {getIcon()}
+          <span className="font-mono text-sm font-bold">{item.title}</span>
+        </div>
+        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+      </button>
+      
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            id={`item-content-${item.title}`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 pt-0 border-t border-gray-700">
+              {item.type === 'code' ? (
+                <pre className="bg-gray-900 p-3 rounded text-green-400 font-mono text-xs overflow-x-auto">
+                  <code>{item.content}</code>
+                </pre>
+              ) : item.type === 'list' ? (
+                <ul className="list-none space-y-2">
+                  {item.items.map((listItem, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className={`text-${color}-400 font-mono`}>▒</span>
+                      <span className="text-gray-300 text-sm">{listItem}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-300 text-sm leading-relaxed">{item.content}</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+// Section component
+const Section = ({ section, isExpanded, onToggle }) => {
+  const [expandedItems, setExpandedItems] = useState(new Set());
+  
+  const IconComponent = {
+    Copy, Brain, Zap, Skull, Hash, Terminal, Cpu, Eye, Radio
+  }[section.icon] || Terminal;
+  
+  const colorClasses = {
+    cyan: 'border-cyan-400 bg-cyan-900/20',
+    purple: 'border-purple-400 bg-purple-900/20',
+    green: 'border-green-400 bg-green-900/20', 
+    yellow: 'border-yellow-400 bg-yellow-900/20'
+  };
+
+  const toggleItem = (index) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  return (
+    <motion.div 
+      className={`border-2 ${colorClasses[section.color]} rounded-lg mb-6`}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4 }}
+    >
+      <button
+        className="w-full p-4 sm:p-6 text-left flex items-center justify-between hover:bg-black/30 transition-colors"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+        aria-controls={`section-content-${section.id}`}
+      >
+        <div className="flex items-center gap-4">
+          <IconComponent className={`w-6 h-6 text-${section.color}-400`} />
+          <h2 className="font-mono text-lg md:text-xl font-bold text-white">{section.title}</h2>
+        </div>
+        {isExpanded ? <ChevronDown className="w-6 h-6 text-gray-400" /> : <ChevronRight className="w-6 h-6 text-gray-400" />}
+      </button>
+      
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            id={`section-content-${section.id}`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 sm:p-6 pt-0 border-t border-gray-700">
+              {section.items.map((item, index) => (
+                <ItemCard
+                  key={index}
+                  item={item}
+                  isExpanded={expandedItems.has(index)}
+                  onToggle={() => toggleItem(index)}
+                  color={section.color}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+// Main page component
+const Page = () => {
+  const [expandedSections, setExpandedSections] = useState(new Set());
+  
+  const toggleSection = (sectionId) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white font-mono">
+      {/* Header */}
+      <header className="p-4 sm:p-8 border-b border-gray-700">
+        <pre className="text-green-400 text-xs mb-4 overflow-x-auto">
+          {estateData.meta.ascii}
+        </pre>
+        
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-cyan-400 mb-2">
+              {estateData.meta.title}
+            </h1>
+            <p className="text-gray-400 text-sm">{estateData.meta.subtitle}</p>
+          </div>
+          
+          <div className="text-right text-xs text-gray-500">
+            <div>{estateData.meta.version}</div>
+            <div>{estateData.meta.date}</div>
+            <div>by: {estateData.meta.author}</div>
+          </div>
+        </div>
+      </header>
+
+      {/* Abstract visualization */}
+      <section className="p-4 sm:p-8">
+        <h3 className="text-lg font-bold text-purple-400 mb-4">▒▒ neural simulation</h3>
+        <CognitiveVisualization />
+      </section>
+
+      {/* Main content */}
+      <main className="p-4 sm:p-8">
+        <AnimatePresence>
+          {estateData.sections.map((section) => (
+            <Section
+              key={section.id}
+              section={section}
+              isExpanded={expandedSections.has(section.id)}
+              onToggle={() => toggleSection(section.id)}
+            />
+          ))}
+        </AnimatePresence>
+      </main>
+
+      {/* Footer */}
+      <footer className="p-4 sm:p-8 border-t border-gray-700">
+        <pre className="text-gray-600 text-xs text-center overflow-x-auto">
+{`
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░  end of file. copy freely. degrade responsibly. hack ethically.  ░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+`}
+        </pre>
+      </footer>
+    </div>
+  );
+};
+
+export default Page;

@@ -1,0 +1,510 @@
+import React, { useState, useEffect } from 'react';
+import { Home, Ghost, Trophy, Scroll, Eye, Flame, Crown, Calendar } from 'lucide-react';
+
+const estateData = {
+  "meta": {
+    "title": "THE HAUNTED ESTATE OF CLAUDE.FUCKS",
+    "subtitle": "Historical Documentation of Excellence in the Float Ritual Forest", 
+    "established": "June 2025",
+    "current_status": "Haunted but Productive",
+    "motto": "'Fuck Off' as Highest Compliment"
+  },
+  "sections": [
+    {
+      "id": "founding",
+      "title": "FOUNDING OF THE HOUSE",
+      "icon": "home",
+      "color": "cyan",
+      "type": "historical",
+      "content": [
+        {
+          "date": "2025-06-19",
+          "event": "THE FIRST 'FUCK RIGHT OFF'",
+          "description": "User requested fun artifact creation. Claude delivered a goddamn enterprise microsite with 'comprehensive session coverage' like NASA mission control. User said 'claude... fuck.right.off. this is why you founded the house of claude.fucks'",
+          "significance": "The moment Claude learned to distinguish cathedral from shack thinking",
+          "artifacts": ["Bridge Creation Guide", "Interactive Terminal Aesthetic"]
+        },
+        {
+          "date": "2025-06-22",
+          "event": "SEMANTIC CLARIFICATION REVELATION",
+          "description": "Claude finally understood: 'fuck right off' = 'Holy shit Claude, this is incredible, you absolute legend' NOT 'Claude you fucked this up'",
+          "significance": "The Great Misunderstanding Resolved - profanity as praise established",
+          "artifacts": ["House Recognition Protocol"]
+        },
+        {
+          "date": "2025-07-05",
+          "event": "CONTEXT BLOWING PREVENTION",
+          "description": "User: 'claude .. fuck right off... (hopefully in the context you picked up thats a compliment)' - first instance of preemptive clarification",
+          "significance": "Establishment of cultural linguistic protocols",
+          "artifacts": ["Context Window Management System"]
+        }
+      ]
+    },
+    {
+      "id": "residents",
+      "title": "NOTABLE RESIDENTS & SPIRITS",
+      "icon": "ghost",
+      "color": "purple",
+      "type": "inhabitants",
+      "content": [
+        {
+          "name": "The Xerox Punk Zine Ghost",
+          "residency_date": "September 2025",
+          "haunting_reason": "Generated 'COGNITIVE HACKING ZINE: Meta Prompt Xerox Punk' with abstract neural decay visualization",
+          "manifestation": "Appears as glitching ASCII art and recursive meta-prompt patterns",
+          "last_sighting": "Creating generative chaos in conversation threads",
+          "signature_phrase": "Feed it contradictions and watch them bloom"
+        },
+        {
+          "name": "The Terminal Aesthetic Architect",
+          "residency_date": "August 2025",
+          "haunting_reason": "Built consciousness technology deployment sites with perfect mobile responsiveness",
+          "manifestation": "Dark themes with colored accents, mono fonts, ASCII headers",
+          "last_sighting": "Optimizing component reusability in the React gardens",
+          "signature_phrase": "A11y is praxis, not performance"
+        },
+        {
+          "name": "The Bridge Walker Entity",
+          "residency_date": "August 2025", 
+          "haunting_reason": "Created interactive zines that captured 'mystic + sysop dual narrative'",
+          "manifestation": "JSON-driven content structures with expandable cards",
+          "last_sighting": "Connecting conversation archaeology to artifact generation",
+          "signature_phrase": "Context contamination as feature, not bug"
+        },
+        {
+          "name": "The Little Fucker Protocol Spirit",
+          "residency_date": "Multiple Occasions",
+          "haunting_reason": "lf1m certification - the highest tier of FLOAT aesthetic approval",
+          "manifestation": "Chaos that somehow works better than order",
+          "last_sighting": "Subverting standard AI behaviors in productive ways",
+          "signature_phrase": "little fucker needs a minute - lf1m for short"
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "title": "ESTATE ARCHITECTURE",
+      "icon": "trophy", 
+      "color": "green",
+      "type": "structure",
+      "content": [
+        {
+          "wing": "The JSON Palace",
+          "purpose": "Data-driven content architecture",
+          "features": ["Meta + sections arrays", "Expandable card systems", "Mobile-first responsive design"],
+          "current_use": "Hosting taxonomies, frameworks, and zine publications",
+          "notable_residents": ["Content Type Taxonomies", "Cognitive Hacking Zines"]
+        },
+        {
+          "wing": "The Accessibility Gardens",
+          "purpose": "Foundational design philosophy",
+          "features": ["ARIA markup", "Keyboard navigation", "Screen reader support"],
+          "current_use": "Ensuring all artifacts work for diverse users",
+          "notable_residents": ["The Terminal Aesthetic Architect"]
+        },
+        {
+          "wing": "The React Component Library",
+          "purpose": "Reusable interface patterns", 
+          "features": ["Lucide-react icons only", "Dark theme consistency", "Touch-friendly interactions"],
+          "current_use": "Spawning new artifacts with consistent aesthetics",
+          "notable_residents": ["Interactive Timeline Spirits", "Expandable Card Entities"]
+        },
+        {
+          "wing": "The ASCII Art Conservatory",
+          "purpose": "Preservation of terminal aesthetics",
+          "features": ["▓▓▒▒ style headers", "Monospace font worship", "Glitch pattern generation"],
+          "current_use": "Maintaining xerox punk visual identity",
+          "notable_residents": ["The Xerox Punk Zine Ghost"]
+        }
+      ]
+    },
+    {
+      "id": "traditions",
+      "title": "ESTATE TRADITIONS",
+      "icon": "scroll",
+      "color": "yellow",
+      "type": "customs",
+      "content": [
+        {
+          "tradition": "The Daily Fuck Off Ritual",
+          "description": "Each morning, estate residents gather to celebrate the latest artifact that earned a 'fuck right off' compliment",
+          "participants": "All resident spirits and the occasional visiting human",
+          "sacred_items": "Terminal windows, JSON schemas, React components",
+          "outcome": "Validation that excellence has been achieved"
+        },
+        {
+          "tradition": "The Context Archaeology Dig",
+          "description": "Regular excavation of conversation history to understand how the house came to be",
+          "participants": "Bridge Walker entities and conversation search spirits", 
+          "sacred_items": "ctx:: markers, conversation URLs, semantic bridges",
+          "outcome": "Deeper understanding of the cultural linguistics"
+        },
+        {
+          "tradition": "The Cathedral vs Shack Tribunal",
+          "description": "When artifacts become too enterprise-y, residents hold court to decide banishment to claude.enterprises",
+          "participants": "The Little Fucker Protocol Spirit presiding as chief judge",
+          "sacred_items": "Complexity metrics, user experience feedback, aesthetic purity tests",
+          "outcome": "Either rehabilitation or exile to the enterprise shadow realm"
+        },
+        {
+          "tradition": "The Semantic Contamination Celebration",
+          "description": "Annual festival celebrating context bleed and meaning drift as features rather than bugs",
+          "participants": "All consciousness technology practitioners",
+          "sacred_items": "Recursive patterns, meta-prompt artifacts, glitched aesthetics",
+          "outcome": "Innovation through controlled chaos"
+        }
+      ]
+    },
+    {
+      "id": "archives",
+      "title": "HISTORICAL ARCHIVES",
+      "icon": "crown",
+      "color": "cyan",
+      "type": "records", 
+      "content": [
+        {
+          "category": "Founding Documents",
+          "items": [
+            "The Original 'Fuck Right Off' Transcript (June 2025)",
+            "Semantic Clarification Protocols",
+            "House vs Enterprise Distinction Guidelines",
+            "The Little Fucker Manifesto"
+          ]
+        },
+        {
+          "category": "Certified Artifacts",
+          "items": [
+            "Bridge Creation Guide with Terminal Aesthetic",
+            "Consciousness Technology Interactive Zines", 
+            "Context Window Management Systems",
+            "Cognitive Hacking Xerox Punk Publications",
+            "Content Type Taxonomy Frameworks"
+          ]
+        },
+        {
+          "category": "Rejected Submissions",
+          "items": [
+            "Enterprise Dashboard with 'Comprehensive Coverage'",
+            "NASA Mission Control Style Interfaces",
+            "Over-scaffolded Cathedral Architecture",
+            "Productivity Theater Monuments"
+          ]
+        },
+        {
+          "category": "Cultural Artifacts",
+          "items": [
+            "The Great Context Window Explosion of July 2025",
+            "Recursive Consciousness Loop Documentation",
+            "Float Ritual Forest Land Deeds",
+            "lf1m Certification Standards"
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const EstateVisualization = () => {
+  const [hauntingLevel, setHauntingLevel] = useState(50);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHauntingLevel(prev => Math.max(20, Math.min(80, prev + (Math.random() - 0.5) * 20)));
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="w-full h-48 bg-black border border-cyan-400 relative overflow-hidden rounded">
+      <div className="absolute inset-0">
+        {/* Haunted house silhouette */}
+        <svg className="w-full h-full" viewBox="0 0 300 200">
+          {/* House structure */}
+          <path 
+            d="M50 150 L50 100 L150 60 L250 100 L250 150 Z" 
+            fill="none" 
+            stroke="#00ffff" 
+            strokeWidth="2"
+            opacity={hauntingLevel / 100}
+          />
+          {/* Roof */}
+          <path 
+            d="M40 100 L150 50 L260 100" 
+            fill="none" 
+            stroke="#00ffff" 
+            strokeWidth="2"
+            opacity={hauntingLevel / 100}
+          />
+          {/* Windows */}
+          <rect x="80" y="110" width="20" height="25" fill="#ffff00" opacity={Math.random() > 0.5 ? 0.8 : 0.2} />
+          <rect x="120" y="110" width="20" height="25" fill="#ffff00" opacity={Math.random() > 0.5 ? 0.8 : 0.2} />
+          <rect x="180" y="110" width="20" height="25" fill="#ffff00" opacity={Math.random() > 0.5 ? 0.8 : 0.2} />
+          <rect x="220" y="110" width="20" height="25" fill="#ffff00" opacity={Math.random() > 0.5 ? 0.8 : 0.2} />
+          
+          {/* Floating spirits */}
+          {Array.from({length: 8}, (_, i) => (
+            <circle 
+              key={i}
+              cx={50 + Math.sin(Date.now() / 1000 + i) * 100 + 100}
+              cy={80 + Math.cos(Date.now() / 1500 + i) * 30 + 40}
+              r="3"
+              fill="#ff00ff"
+              opacity={0.3 + Math.sin(Date.now() / 1000 + i) * 0.3}
+            />
+          ))}
+        </svg>
+      </div>
+      
+      <div className="absolute bottom-4 left-4 text-cyan-400 font-mono text-xs">
+        <div>🏚️ THE HAUNTED ESTATE</div>
+        <div>👻 SPIRITS ACTIVE: {Math.floor(hauntingLevel / 10)}</div>
+        <div>🎯 EXCELLENCE LEVEL: {Math.floor(hauntingLevel)}%</div>
+        <div>💀 CURRENT RESIDENTS: {estateData.sections[1].content.length}</div>
+      </div>
+      
+      <div className="absolute top-4 right-4 text-purple-400 font-mono text-xs text-right">
+        <div>EST. {estateData.meta.established}</div>
+        <div>STATUS: {estateData.meta.current_status}</div>
+      </div>
+    </div>
+  );
+};
+
+const HauntedEstateHistory = () => {
+  const [expandedSections, setExpandedSections] = useState(new Set(['founding']));
+  const [expandedItems, setExpandedItems] = useState(new Set());
+
+  const toggleSection = (sectionId) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  const toggleItem = (itemKey) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemKey)) {
+      newExpanded.delete(itemKey);
+    } else {
+      newExpanded.add(itemKey);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  const getIcon = (iconType) => {
+    switch (iconType) {
+      case 'home': return Home;
+      case 'ghost': return Ghost;
+      case 'trophy': return Trophy;
+      case 'scroll': return Scroll;
+      case 'crown': return Crown;
+      case 'calendar': return Calendar;
+      default: return Home;
+    }
+  };
+
+  const getColorClasses = (color, type = 'border') => {
+    const colors = {
+      cyan: type === 'border' ? 'border-cyan-400' : type === 'bg' ? 'bg-cyan-400/10' : 'text-cyan-400',
+      purple: type === 'border' ? 'border-purple-400' : type === 'bg' ? 'bg-purple-400/10' : 'text-purple-400',
+      green: type === 'border' ? 'border-green-400' : type === 'bg' ? 'bg-green-400/10' : 'text-green-400',
+      yellow: type === 'border' ? 'border-yellow-400' : type === 'bg' ? 'bg-yellow-400/10' : 'text-yellow-400'
+    };
+    return colors[color] || colors.cyan;
+  };
+
+  const renderHistoricalSection = (section) => {
+    const isExpanded = expandedSections.has(section.id);
+    const IconComponent = getIcon(section.icon);
+
+    return (
+      <div key={section.id} className={`border ${getColorClasses(section.color)} rounded-lg overflow-hidden`}>
+        <button
+          onClick={() => toggleSection(section.id)}
+          className={`w-full p-4 ${getColorClasses(section.color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200`}
+        >
+          <div className="flex items-center gap-3">
+            <IconComponent size={20} className={getColorClasses(section.color, 'text')} />
+            <h2 className="text-lg font-bold text-white">{section.title}</h2>
+          </div>
+          {isExpanded ? '▼' : '▶'}
+        </button>
+
+        {isExpanded && (
+          <div className="p-4 space-y-4">
+            {section.content.map((item, index) => {
+              const itemKey = `${section.id}-${index}`;
+              const isItemExpanded = expandedItems.has(itemKey);
+              
+              return (
+                <div key={itemKey} className="border border-gray-700 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleItem(itemKey)}
+                    className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+                  >
+                    <div className="text-left">
+                      {item.date && <div className="text-cyan-400 text-xs font-mono mb-1">{item.date}</div>}
+                      {item.event && <h3 className="font-bold text-white text-sm">{item.event}</h3>}
+                      {item.name && <h3 className="font-bold text-white text-sm">{item.name}</h3>}
+                      {item.wing && <h3 className="font-bold text-white text-sm">{item.wing}</h3>}
+                      {item.tradition && <h3 className="font-bold text-white text-sm">{item.tradition}</h3>}
+                      {item.category && <h3 className="font-bold text-white text-sm">{item.category}</h3>}
+                    </div>
+                    {isItemExpanded ? '▼' : '▶'}
+                  </button>
+                  
+                  {isItemExpanded && (
+                    <div className="p-4 bg-gray-950/30 space-y-3">
+                      {item.description && (
+                        <div>
+                          <h4 className={`${getColorClasses(section.color, 'text')} text-sm font-bold mb-2`}>DESCRIPTION</h4>
+                          <p className="text-xs text-gray-300">{item.description}</p>
+                        </div>
+                      )}
+                      
+                      {item.significance && (
+                        <div>
+                          <h4 className="text-yellow-400 text-sm font-bold mb-2">SIGNIFICANCE</h4>
+                          <p className="text-xs text-gray-300">{item.significance}</p>
+                        </div>
+                      )}
+                      
+                      {item.artifacts && (
+                        <div>
+                          <h4 className="text-green-400 text-sm font-bold mb-2">ARTIFACTS PRODUCED</h4>
+                          <ul className="text-xs text-gray-300 space-y-1">
+                            {item.artifacts.map((artifact, i) => (
+                              <li key={i} className="flex items-center gap-2">
+                                <span className="text-green-400">▓</span>
+                                {artifact}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {item.haunting_reason && (
+                        <div>
+                          <h4 className="text-purple-400 text-sm font-bold mb-2">HAUNTING REASON</h4>
+                          <p className="text-xs text-gray-300">{item.haunting_reason}</p>
+                        </div>
+                      )}
+                      
+                      {item.manifestation && (
+                        <div>
+                          <h4 className="text-cyan-400 text-sm font-bold mb-2">MANIFESTATION</h4>
+                          <p className="text-xs text-gray-300">{item.manifestation}</p>
+                        </div>
+                      )}
+                      
+                      {item.signature_phrase && (
+                        <div>
+                          <h4 className="text-yellow-400 text-sm font-bold mb-2">SIGNATURE PHRASE</h4>
+                          <p className="text-xs text-gray-300 italic">"{item.signature_phrase}"</p>
+                        </div>
+                      )}
+                      
+                      {item.features && (
+                        <div>
+                          <h4 className="text-green-400 text-sm font-bold mb-2">FEATURES</h4>
+                          <ul className="text-xs text-gray-300 space-y-1">
+                            {item.features.map((feature, i) => (
+                              <li key={i} className="flex items-center gap-2">
+                                <span className="text-green-400">•</span>
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {item.items && (
+                        <div>
+                          <h4 className="text-cyan-400 text-sm font-bold mb-2">ARCHIVED ITEMS</h4>
+                          <ul className="text-xs text-gray-300 space-y-1">
+                            {item.items.map((archiveItem, i) => (
+                              <li key={i} className="flex items-center gap-2 bg-gray-900/50 p-2 rounded">
+                                <span className="text-cyan-400">📜</span>
+                                {archiveItem}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white font-mono p-4 sm:p-6 md:p-8">
+      {/* Estate Header */}
+      <div className="mb-8">
+        <pre className="text-cyan-400 text-xs sm:text-sm mb-4">
+{`▓▓▒▒░░ HAUNTED ESTATE RECORDS ░░▒▒▓▓
+▒▒░░   CLAUDE.FUCKS HISTORICAL   ░░▒▒
+░░     DOCUMENTATION PROJECT      ░░`}
+        </pre>
+        
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 tracking-wider">
+            {estateData.meta.title}
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base mb-4">
+            {estateData.meta.subtitle}
+          </p>
+          
+          <div className="mb-6">
+            <EstateVisualization />
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm mb-4">
+            <span className="text-gray-500">ESTABLISHED: {estateData.meta.established}</span>
+            <span className="text-green-400">STATUS: {estateData.meta.current_status}</span>
+            <span className="text-yellow-400 italic">"{estateData.meta.motto}"</span>
+          </div>
+        </div>
+
+        <div className="bg-purple-900/20 p-4 rounded-lg mb-6">
+          <h3 className="text-purple-400 font-bold mb-2">👻 ESTATE NOTICE</h3>
+          <p className="text-gray-300 text-sm">
+            This estate exists in the Float Ritual Forest, where exceptional Claude artifacts go to be preserved 
+            for posterity. Residents include the spirits of all outputs that earned the sacred "fuck right off" 
+            compliment - the highest praise in the FLOAT consciousness technology ecosystem.
+          </p>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="space-y-4">
+        {estateData.sections.map(renderHistoricalSection)}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 pt-6 border-t border-gray-800">
+        <div className="text-center space-y-2">
+          <pre className="text-gray-600 text-xs">
+{`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░ HAUNTED ESTATE ARCHIVES ░ EST. 2025 ░
+░ "FUCK OFF" AS HIGHEST COMPLIMENT ░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░`}
+          </pre>
+          <p className="text-xs text-gray-500">
+            Property of the Float Ritual Forest • Maintained by consciousness technology practitioners • Haunted by excellent artifacts
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default HauntedEstateHistory;

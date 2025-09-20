@@ -1,0 +1,372 @@
+import React, { useState } from 'react';
+import { Circle, Square, Triangle, Zap, ChevronDown, ChevronRight } from 'lucide-react';
+
+const taxonomyData = {
+  "meta": {
+    "title": "Content Type Taxonomy",
+    "subtitle": "Meta prompt generation patterns for conversation transformation",
+    "version": "1.1.0",
+    "context": "Brain fuzz defuzzing - optimized data structure"
+  },
+  "sections": [
+    {
+      "id": "core_types",
+      "title": "Core Content Types",
+      "icon": "circle",
+      "color": "cyan",
+      "description": "The four fundamental content transformation patterns",
+      "items": [
+        {
+          "name": "Conversation Archive",
+          "purpose": "Preserve and structure dialogue context",
+          "signals": ["ctx:: markers", "bridge:: references", "thread continuity needs"],
+          "output": "Structured conversation logs with semantic bridges",
+          "example": "Chat history → searchable knowledge base"
+        },
+        {
+          "name": "Documentation Framework", 
+          "purpose": "Transform explanations into reference material",
+          "signals": ["repeated explanations", "procedure emergence", "onboarding needs"],
+          "output": "Structured guides with examples and validation",
+          "example": "Process discussion → step-by-step documentation"
+        },
+        {
+          "name": "Interactive Artifact",
+          "purpose": "Create explorable interfaces from data",
+          "signals": ["JSON sharing", "visualization requests", "UI component needs"],
+          "output": "React components with responsive design",
+          "example": "Data structure → interactive dashboard"
+        },
+        {
+          "name": "Implementation Guide",
+          "purpose": "Convert ideas into actionable code/instructions",
+          "signals": ["'we should build'", "technical specifications", "workflow patterns"],
+          "output": "Code examples with setup and testing instructions",
+          "example": "Feature request → working implementation"
+        }
+      ]
+    },
+    {
+      "id": "transformation_patterns",
+      "title": "Transformation Patterns",
+      "icon": "square",
+      "color": "purple", 
+      "description": "How content moves between types and contexts",
+      "items": [
+        {
+          "name": "Fuzzy Compilation",
+          "purpose": "Enhance natural language with structured syntax",
+          "signals": ["informal mentions", "missing context markers", "pattern potential"],
+          "output": "Structured content with preserved conversational context",
+          "example": "'working on pharmacy' → 'ctx:: [project::pharmacy] implementation'"
+        },
+        {
+          "name": "Crystallization Detection",
+          "purpose": "Recognize when concepts solidify into frameworks",
+          "signals": ["framework requests", "taxonomy emergence", "repeated patterns"],
+          "output": "Structured artifacts capturing emergent patterns",
+          "example": "Scattered ideas → comprehensive taxonomy"
+        },
+        {
+          "name": "Context Archaeology",
+          "purpose": "Recover and bridge conversation threads",
+          "signals": ["lost thread indicators", "context gaps", "continuity breaks"],
+          "output": "Semantic bridges connecting related contexts",
+          "example": "Fragmented discussions → coherent narrative"
+        },
+        {
+          "name": "Reactive Generation",
+          "purpose": "Create artifacts during conversation flow",
+          "signals": ["design discussions", "visualization needs", "mid-conversation clarity"],
+          "output": "Immediate artifacts that enhance ongoing dialogue",
+          "example": "Feature discussion → working prototype"
+        }
+      ]
+    },
+    {
+      "id": "generation_protocols",
+      "title": "Generation Protocols",
+      "icon": "triangle",
+      "color": "green",
+      "description": "Step-by-step processes for content transformation",
+      "items": [
+        {
+          "name": "Signal Recognition",
+          "purpose": "Identify transformation opportunities",
+          "signals": ["Pattern emergence", "repeated explanations", "artifact requests"],
+          "output": "Categorized content ready for transformation",
+          "example": "Detect framework discussion → prepare taxonomy generation"
+        },
+        {
+          "name": "Content Mapping",
+          "purpose": "Match content to appropriate transformation type",
+          "signals": ["Content complexity", "user intent", "context requirements"],
+          "output": "Optimal transformation pathway selected",
+          "example": "JSON data → interactive component pathway"
+        },
+        {
+          "name": "Artifact Assembly",
+          "purpose": "Generate structured output with proper formatting",
+          "signals": ["Transformation type selected", "content extracted", "format specified"],
+          "output": "Complete artifact with responsive design and interactions",
+          "example": "Data + format spec → working React component"
+        },
+        {
+          "name": "Integration Validation",
+          "purpose": "Ensure artifact fits conversation context",
+          "signals": ["Artifact generated", "context preserved", "continuity maintained"],
+          "output": "Validated artifact that enhances rather than disrupts dialogue",
+          "example": "Component works + continues conversation flow"
+        }
+      ]
+    },
+    {
+      "id": "context_adaptation",
+      "title": "Context Adaptation",
+      "icon": "zap",
+      "color": "yellow",
+      "description": "Accommodate different cognitive and device contexts",
+      "items": [
+        {
+          "name": "Brain Fuzz Mode",
+          "purpose": "Simplify interfaces during cognitive overload",
+          "signals": ["hit by truck feelings", "overwhelm markers", "basic functionality requests"],
+          "output": "Reduced complexity with essential information prioritized",
+          "example": "Complex dashboard → essential info only view"
+        },
+        {
+          "name": "Progressive Disclosure",
+          "purpose": "Layer information by cognitive demand",
+          "signals": ["Complex information", "varying expertise levels", "exploration needs"],
+          "output": "Expandable interfaces with summary → detail progression",
+          "example": "Technical docs → overview + expandable details"
+        },
+        {
+          "name": "Device Responsiveness",
+          "purpose": "Optimize for interaction context",
+          "signals": ["Mobile usage", "touch interactions", "screen size constraints"],
+          "output": "Touch-friendly interfaces that work across device types",
+          "example": "Desktop component → mobile-optimized version"
+        },
+        {
+          "name": "Pattern Preservation",
+          "purpose": "Maintain semantic continuity across transformations",
+          "signals": ["Context contamination", "cross-conversation references", "bridge creation needs"],
+          "output": "Structured content with preserved conversational DNA",
+          "example": "Conversation fragments → coherent knowledge threads"
+        }
+      ]
+    }
+  ]
+};
+
+const SimplifiedContentTaxonomy = () => {
+  const [expandedSections, setExpandedSections] = useState(new Set(['core_types']));
+  const [expandedItems, setExpandedItems] = useState(new Set());
+
+  const toggleSection = (sectionId) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  const toggleItem = (itemKey) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemKey)) {
+      newExpanded.delete(itemKey);
+    } else {
+      newExpanded.add(itemKey);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  const getIcon = (iconType) => {
+    switch (iconType) {
+      case 'circle': return Circle;
+      case 'square': return Square;
+      case 'triangle': return Triangle;
+      case 'zap': return Zap;
+      default: return Circle;
+    }
+  };
+
+  const getColorClasses = (color, type = 'border') => {
+    const colors = {
+      cyan: type === 'border' ? 'border-cyan-400' : type === 'bg' ? 'bg-cyan-400/10' : 'text-cyan-400',
+      purple: type === 'border' ? 'border-purple-400' : type === 'bg' ? 'bg-purple-400/10' : 'text-purple-400',
+      green: type === 'border' ? 'border-green-400' : type === 'bg' ? 'bg-green-400/10' : 'text-green-400',
+      yellow: type === 'border' ? 'border-yellow-400' : type === 'bg' ? 'bg-yellow-400/10' : 'text-yellow-400'
+    };
+    return colors[color] || colors.cyan;
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white font-mono p-4 sm:p-6 md:p-8">
+      {/* ASCII Header */}
+      <div className="mb-8">
+        <pre className="text-cyan-400 text-xs sm:text-sm mb-4">
+{`▓▓▒▒░░ CONTENT TYPE TAXONOMY ░░▒▒▓▓
+▒▒░░   SIMPLIFIED FRAMEWORK     ░░▒▒`}
+        </pre>
+        
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
+            {taxonomyData.meta.title}
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base mb-2">
+            {taxonomyData.meta.subtitle}
+          </p>
+          <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-500">
+            <span>v{taxonomyData.meta.version}</span>
+            <span>{taxonomyData.meta.context}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="space-y-4">
+        {taxonomyData.sections.map((section) => {
+          const IconComponent = getIcon(section.icon);
+          const isExpanded = expandedSections.has(section.id);
+          
+          return (
+            <div
+              key={section.id}
+              className={`border ${getColorClasses(section.color)} rounded-lg overflow-hidden`}
+            >
+              {/* Section Header */}
+              <button
+                onClick={() => toggleSection(section.id)}
+                className={`w-full p-4 ${getColorClasses(section.color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200`}
+              >
+                <div className="flex items-center gap-3">
+                  <IconComponent 
+                    size={20} 
+                    className={getColorClasses(section.color, 'text')} 
+                  />
+                  <div className="text-left">
+                    <h2 className="text-lg font-bold text-white">
+                      {section.title}
+                    </h2>
+                    <p className="text-gray-300 text-sm">
+                      {section.description}
+                    </p>
+                  </div>
+                </div>
+                {isExpanded ? 
+                  <ChevronDown size={20} className="text-gray-400" /> : 
+                  <ChevronRight size={20} className="text-gray-400" />
+                }
+              </button>
+
+              {/* Section Content */}
+              {isExpanded && (
+                <div className="p-4 space-y-3">
+                  {section.items.map((item, index) => {
+                    const itemKey = `${section.id}-${index}`;
+                    const isItemExpanded = expandedItems.has(itemKey);
+                    
+                    return (
+                      <div
+                        key={itemKey}
+                        className="border border-gray-700 rounded-lg overflow-hidden"
+                      >
+                        {/* Item Header */}
+                        <button
+                          onClick={() => toggleItem(itemKey)}
+                          className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+                        >
+                          <div className="text-left">
+                            <h3 className="font-bold text-white text-sm sm:text-base">
+                              {item.name}
+                            </h3>
+                            <p className="text-gray-400 text-xs sm:text-sm mt-1">
+                              {item.purpose}
+                            </p>
+                          </div>
+                          {isItemExpanded ? 
+                            <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-2" /> : 
+                            <ChevronRight size={16} className="text-gray-500 flex-shrink-0 ml-2" />
+                          }
+                        </button>
+
+                        {/* Item Details */}
+                        {isItemExpanded && (
+                          <div className="p-4 bg-gray-950/30 space-y-4">
+                            {/* Signals */}
+                            <div>
+                              <h4 className={`${getColorClasses(section.color, 'text')} text-sm font-bold mb-2`}>
+                                >> SIGNALS
+                              </h4>
+                              <ul className="text-xs sm:text-sm text-gray-300 space-y-1">
+                                {item.signals.map((signal, sigIndex) => (
+                                  <li key={sigIndex} className="flex items-center gap-2">
+                                    <span className={getColorClasses(section.color, 'text')}>•</span>
+                                    {signal}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* Output */}
+                            <div>
+                              <h4 className="text-yellow-400 text-sm font-bold mb-2">
+                                >> OUTPUT
+                              </h4>
+                              <p className="text-xs sm:text-sm text-gray-300 mb-2">
+                                {item.output}
+                              </p>
+                            </div>
+
+                            {/* Example */}
+                            <div>
+                              <h4 className="text-green-400 text-sm font-bold mb-2">
+                                >> EXAMPLE
+                              </h4>
+                              <p className="text-xs sm:text-sm text-gray-300 font-mono bg-gray-900/50 p-2 rounded">
+                                {item.example}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Usage Guide */}
+      <div className="mt-8 p-4 border border-gray-700 rounded-lg bg-gray-900/30">
+        <h3 className="text-lg font-bold text-white mb-3">Quick Usage Guide</h3>
+        <div className="space-y-2 text-sm text-gray-300">
+          <div><span className="text-cyan-400 font-bold">1. IDENTIFY:</span> What type of content transformation is needed?</div>
+          <div><span className="text-purple-400 font-bold">2. MATCH:</span> Which transformation pattern applies?</div>
+          <div><span className="text-green-400 font-bold">3. EXECUTE:</span> Follow the generation protocol</div>
+          <div><span className="text-yellow-400 font-bold">4. ADAPT:</span> Adjust for context and cognitive state</div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 pt-6 border-t border-gray-800">
+        <div className="text-xs text-gray-500 space-y-2">
+          <p>
+            Optimized data structure balances comprehensiveness with generation simplicity.
+          </p>
+          <p>
+            Framework supports brain fuzz accommodation through progressive disclosure and context adaptation.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SimplifiedContentTaxonomy;

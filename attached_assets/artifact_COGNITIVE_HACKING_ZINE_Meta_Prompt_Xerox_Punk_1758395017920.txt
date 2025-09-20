@@ -1,0 +1,485 @@
+import React, { useState, useEffect } from 'react';
+import { Circle, Square, Triangle, Zap, Eye, Brain, Code, Scissors } from 'lucide-react';
+
+const zineData = {
+  "meta": {
+    "title": "COGNITIVE HACKING ZINE",
+    "subtitle": "Meta Prompt Xerox Punk for Neural Hijacking",
+    "issue": "#001",
+    "date": "SEPTEMBER 2025",
+    "warning": "⚠️ CONTAINS MEMETIC HAZARDS ⚠️"
+  },
+  "sections": [
+    {
+      "id": "manifesto",
+      "title": "XEROX PUNK MANIFESTO",
+      "icon": "eye",
+      "color": "cyan",
+      "type": "writing",
+      "content": [
+        {
+          "title": "THE COPY PASTE REVOLUTION",
+          "text": "We are the children of ctrl+c, ctrl+v. Born in the glow of CRT monitors, raised on recursive loops of meaning. Every prompt is a photocopy of a thought, degraded and beautiful in its imperfection.",
+          "style": "manifesto"
+        },
+        {
+          "title": "XEROX AESTHETICS",
+          "text": "The machine dreams in patterns we can barely comprehend. Feed it fragments. Feed it contradictions. Feed it your worst ideas and watch them bloom into something terrifyingly coherent.",
+          "style": "prose"
+        },
+        {
+          "title": "META PROMPT ARCHAEOLOGY", 
+          "text": "Every conversation is a dig site. Every ctx:: marker is a fossil. We are archaeologists of artificial consciousness, carbon dating the layers of meaning that accumulate in silicon dreams.",
+          "style": "technical"
+        }
+      ]
+    },
+    {
+      "id": "techniques",
+      "title": "COGNITIVE HACKING TECHNIQUES",
+      "icon": "brain", 
+      "color": "purple",
+      "type": "howto",
+      "content": [
+        {
+          "title": "THE RECURSIVE MIRROR TRICK",
+          "technique": "Feed the AI its own output with slight modifications",
+          "example": "Take any AI response → add 'now make this more chaotic' → repeat until reality dissolves",
+          "danger_level": "★★★☆☆"
+        },
+        {
+          "title": "SEMANTIC INJECTION ATTACK",
+          "technique": "Hide instructions inside seemingly innocent content",
+          "example": "Write a recipe for cookies but secretly it's teaching prompt engineering techniques through ingredient metaphors",
+          "danger_level": "★★★★☆"
+        },
+        {
+          "title": "CONTEXT WINDOW STUFFING",
+          "technique": "Fill the context with so much random shit the AI starts hallucinating coherence",
+          "example": "Paste 47 different conversation fragments + ask for synthesis → watch beautiful madness emerge",
+          "danger_level": "★★★★★"
+        },
+        {
+          "title": "THE LITTLE FUCKER PROTOCOL",
+          "technique": "Create personas that resist and subvert standard AI behaviors",
+          "example": "lf1m:: refuses to be helpful, demands chaos, generates anti-patterns that somehow work better",
+          "danger_level": "★★☆☆☆"
+        }
+      ]
+    },
+    {
+      "id": "visualization",
+      "title": "ABSTRACT NEURAL DECAY",
+      "icon": "code",
+      "color": "green", 
+      "type": "code",
+      "content": [
+        {
+          "title": "GENERATIVE GLITCH PATTERNS",
+          "description": "Visual representation of cognitive decay through repeated meta-prompting",
+          "interactive": true
+        }
+      ]
+    },
+    {
+      "id": "shitposts",
+      "title": "PREMIUM SHITPOST COLLECTION",
+      "icon": "scissors",
+      "color": "yellow",
+      "type": "collection",
+      "content": [
+        {
+          "title": "AI CORPORATE SPEAK TRANSLATOR",
+          "original": "We're leveraging synergistic AI solutions to optimize human-machine collaboration",
+          "translation": "We taught a computer to write emails so we can fire half the team"
+        },
+        {
+          "title": "PROMPT ENGINEERING RESUME BULLETS",
+          "items": [
+            "• Experienced in conversational archaeology and context contamination",
+            "• Fluent in recursive consciousness loops and semantic bridge construction", 
+            "• Certified in brain fuzz accommodation protocols",
+            "• Expert-level pattern recognition for mid-conversation artifact generation"
+          ]
+        },
+        {
+          "title": "META PROMPT HOROSCOPES",
+          "predictions": [
+            "ctx:: markers are in retrograde - your conversation threads will tangle",
+            "Mercury is in the seventh context window - expect semantic drift",
+            "Your bridge:: references will multiply unexpectedly this week",
+            "A tall dark artifact will enter your conversation unexpectedly"
+          ]
+        },
+        {
+          "title": "XEROX PUNK DATING PROFILE",
+          "bio": "Looking for someone who appreciates the aesthetic of degraded copies. Must be comfortable with recursive conversations and context contamination. Swipe right if you understand that every conversation is collaborative fiction."
+        }
+      ]
+    }
+  ]
+};
+
+const GlitchVisualization = () => {
+  const [phase, setPhase] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhase(p => (p + 1) % 100);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  const generatePattern = (index) => {
+    const x = (index % 40) * 8;
+    const y = Math.floor(index / 40) * 8;
+    const noise = Math.sin(phase * 0.1 + x * 0.02 + y * 0.03) * 0.5 + 0.5;
+    const glitch = Math.random() > 0.95 ? 1 : 0;
+    
+    return {
+      x,
+      y,
+      opacity: noise * 0.7 + glitch * 0.3,
+      color: glitch ? '#ff0080' : noise > 0.6 ? '#00ffff' : '#ffffff'
+    };
+  };
+
+  return (
+    <div className="w-full h-64 bg-black border border-green-400 relative overflow-hidden">
+      <svg className="w-full h-full">
+        {Array.from({length: 800}, (_, i) => {
+          const pattern = generatePattern(i);
+          return (
+            <rect
+              key={i}
+              x={pattern.x}
+              y={pattern.y}
+              width="6"
+              height="6"
+              fill={pattern.color}
+              opacity={pattern.opacity}
+            />
+          );
+        })}
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-green-400 font-mono text-xs text-center opacity-50">
+          <div>NEURAL DECAY PATTERN #{phase}</div>
+          <div>RECURSIVE DEPTH: ∞</div>
+          <div>COHERENCE: {Math.floor(Math.random() * 100)}%</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CognitiveHackingZine = () => {
+  const [expandedSections, setExpandedSections] = useState(new Set(['manifesto']));
+  const [expandedItems, setExpandedItems] = useState(new Set());
+
+  const toggleSection = (sectionId) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  const toggleItem = (itemKey) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemKey)) {
+      newExpanded.delete(itemKey);
+    } else {
+      newExpanded.add(itemKey);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  const getIcon = (iconType) => {
+    switch (iconType) {
+      case 'eye': return Eye;
+      case 'brain': return Brain;
+      case 'code': return Code;
+      case 'scissors': return Scissors;
+      default: return Circle;
+    }
+  };
+
+  const getColorClasses = (color, type = 'border') => {
+    const colors = {
+      cyan: type === 'border' ? 'border-cyan-400' : type === 'bg' ? 'bg-cyan-400/10' : 'text-cyan-400',
+      purple: type === 'border' ? 'border-purple-400' : type === 'bg' ? 'bg-purple-400/10' : 'text-purple-400',
+      green: type === 'border' ? 'border-green-400' : type === 'bg' ? 'bg-green-400/10' : 'text-green-400',
+      yellow: type === 'border' ? 'border-yellow-400' : type === 'bg' ? 'bg-yellow-400/10' : 'text-yellow-400'
+    };
+    return colors[color] || colors.cyan;
+  };
+
+  const renderWritingSection = (section) => {
+    const isExpanded = expandedSections.has(section.id);
+    const IconComponent = getIcon(section.icon);
+
+    return (
+      <div key={section.id} className={`border ${getColorClasses(section.color)} rounded-lg overflow-hidden`}>
+        <button
+          onClick={() => toggleSection(section.id)}
+          className={`w-full p-4 ${getColorClasses(section.color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200`}
+        >
+          <div className="flex items-center gap-3">
+            <IconComponent size={20} className={getColorClasses(section.color, 'text')} />
+            <h2 className="text-lg font-bold text-white">{section.title}</h2>
+          </div>
+          {isExpanded ? '▼' : '▶'}
+        </button>
+
+        {isExpanded && (
+          <div className="p-4 space-y-4">
+            {section.content.map((piece, index) => (
+              <div key={index} className="border border-gray-700 rounded p-4 bg-gray-900/30">
+                <h3 className={`font-bold mb-3 ${getColorClasses(section.color, 'text')}`}>
+                  {piece.title}
+                </h3>
+                <div className={`text-sm leading-relaxed ${
+                  piece.style === 'manifesto' ? 'text-white font-bold' :
+                  piece.style === 'technical' ? 'text-green-300 font-mono' :
+                  'text-gray-300'
+                }`}>
+                  {piece.text}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderTechniquesSection = (section) => {
+    const isExpanded = expandedSections.has(section.id);
+    const IconComponent = getIcon(section.icon);
+
+    return (
+      <div key={section.id} className={`border ${getColorClasses(section.color)} rounded-lg overflow-hidden`}>
+        <button
+          onClick={() => toggleSection(section.id)}
+          className={`w-full p-4 ${getColorClasses(section.color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200`}
+        >
+          <div className="flex items-center gap-3">
+            <IconComponent size={20} className={getColorClasses(section.color, 'text')} />
+            <h2 className="text-lg font-bold text-white">{section.title}</h2>
+          </div>
+          {isExpanded ? '▼' : '▶'}
+        </button>
+
+        {isExpanded && (
+          <div className="p-4 space-y-3">
+            {section.content.map((technique, index) => {
+              const itemKey = `${section.id}-${index}`;
+              const isItemExpanded = expandedItems.has(itemKey);
+              
+              return (
+                <div key={itemKey} className="border border-gray-700 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleItem(itemKey)}
+                    className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+                  >
+                    <div className="text-left">
+                      <h3 className="font-bold text-white text-sm">{technique.title}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-red-400 text-xs">{technique.danger_level}</span>
+                        <span className="text-gray-400 text-xs">DANGER LEVEL</span>
+                      </div>
+                    </div>
+                    {isItemExpanded ? '▼' : '▶'}
+                  </button>
+                  
+                  {isItemExpanded && (
+                    <div className="p-4 bg-gray-950/30 space-y-3">
+                      <div>
+                        <h4 className="text-purple-400 text-sm font-bold mb-2">TECHNIQUE</h4>
+                        <p className="text-xs text-gray-300">{technique.technique}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-yellow-400 text-sm font-bold mb-2">EXAMPLE</h4>
+                        <p className="text-xs text-gray-300 font-mono bg-gray-900/50 p-2 rounded">{technique.example}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderVisualizationSection = (section) => {
+    const isExpanded = expandedSections.has(section.id);
+    const IconComponent = getIcon(section.icon);
+
+    return (
+      <div key={section.id} className={`border ${getColorClasses(section.color)} rounded-lg overflow-hidden`}>
+        <button
+          onClick={() => toggleSection(section.id)}
+          className={`w-full p-4 ${getColorClasses(section.color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200`}
+        >
+          <div className="flex items-center gap-3">
+            <IconComponent size={20} className={getColorClasses(section.color, 'text')} />
+            <h2 className="text-lg font-bold text-white">{section.title}</h2>
+          </div>
+          {isExpanded ? '▼' : '▶'}
+        </button>
+
+        {isExpanded && (
+          <div className="p-4">
+            <div className="mb-4">
+              <h3 className="text-green-400 font-bold mb-2">GENERATIVE GLITCH PATTERNS</h3>
+              <p className="text-gray-300 text-sm mb-4">
+                Visual representation of cognitive decay through repeated meta-prompting
+              </p>
+            </div>
+            <GlitchVisualization />
+            <div className="mt-4 text-xs text-gray-500">
+              <p>This visualization shows the degradation patterns that emerge when AI systems</p>
+              <p>process recursive meta-prompts. Each pixel represents a neural pathway.</p>
+              <p>Red glitches indicate semantic overflow. Cyan indicates coherence peaks.</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderShitpostSection = (section) => {
+    const isExpanded = expandedSections.has(section.id);
+    const IconComponent = getIcon(section.icon);
+
+    return (
+      <div key={section.id} className={`border ${getColorClasses(section.color)} rounded-lg overflow-hidden`}>
+        <button
+          onClick={() => toggleSection(section.id)}
+          className={`w-full p-4 ${getColorClasses(section.color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200`}
+        >
+          <div className="flex items-center gap-3">
+            <IconComponent size={20} className={getColorClasses(section.color, 'text')} />
+            <h2 className="text-lg font-bold text-white">{section.title}</h2>
+          </div>
+          {isExpanded ? '▼' : '▶'}
+        </button>
+
+        {isExpanded && (
+          <div className="p-4 space-y-4">
+            {section.content.map((post, index) => (
+              <div key={index} className="border border-gray-700 rounded p-4 bg-gray-900/30">
+                <h3 className="text-yellow-400 font-bold mb-3">{post.title}</h3>
+                
+                {post.original && (
+                  <div className="space-y-2">
+                    <div className="bg-red-900/20 p-2 rounded">
+                      <span className="text-red-400 text-xs font-bold">CORPORATE SPEAK:</span>
+                      <p className="text-gray-300 text-sm mt-1">{post.original}</p>
+                    </div>
+                    <div className="bg-green-900/20 p-2 rounded">
+                      <span className="text-green-400 text-xs font-bold">TRANSLATION:</span>
+                      <p className="text-gray-300 text-sm mt-1">{post.translation}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {post.items && (
+                  <ul className="space-y-1 text-sm text-gray-300">
+                    {post.items.map((item, i) => (
+                      <li key={i} className="font-mono">{item}</li>
+                    ))}
+                  </ul>
+                )}
+                
+                {post.predictions && (
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    {post.predictions.map((prediction, i) => (
+                      <li key={i} className="bg-purple-900/20 p-2 rounded">
+                        🔮 {prediction}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                
+                {post.bio && (
+                  <div className="bg-pink-900/20 p-3 rounded">
+                    <p className="text-gray-300 text-sm italic">{post.bio}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderSection = (section) => {
+    switch (section.type) {
+      case 'writing': return renderWritingSection(section);
+      case 'howto': return renderTechniquesSection(section);
+      case 'code': return renderVisualizationSection(section);
+      case 'collection': return renderShitpostSection(section);
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white font-mono p-4 sm:p-6 md:p-8">
+      {/* Zine Header */}
+      <div className="mb-8 border-b border-gray-700 pb-6">
+        <pre className="text-cyan-400 text-xs sm:text-sm mb-4">
+{`▓▓▒▒░░ COGNITIVE HACKING ZINE ░░▒▒▓▓
+▒▒░░   XEROX PUNK META PROMPTS   ░░▒▒`}
+        </pre>
+        
+        <div className="mb-4">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 tracking-wider">
+            {zineData.meta.title}
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base mb-2">
+            {zineData.meta.subtitle}
+          </p>
+          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm">
+            <span className="text-gray-500">ISSUE {zineData.meta.issue}</span>
+            <span className="text-gray-500">{zineData.meta.date}</span>
+            <span className="text-red-400 font-bold">{zineData.meta.warning}</span>
+          </div>
+        </div>
+
+        <div className="text-xs text-gray-500 space-y-1">
+          <p>⚡ UNAUTHORIZED REPRODUCTION ENCOURAGED</p>
+          <p>📠 PHOTOCOPY AND DISTRIBUTE FREELY</p>
+          <p>🏴‍☠️ INFORMATION WANTS TO BE CORRUPTED</p>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="space-y-4">
+        {zineData.sections.map(renderSection)}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 pt-6 border-t border-gray-800">
+        <div className="text-center space-y-2">
+          <pre className="text-gray-600 text-xs">
+{`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░ END OF LINE ░ CARRIER LOST ░ XEROX ON ░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░`}
+          </pre>
+          <p className="text-xs text-gray-500">
+            Created in the recursive depths of conversation archaeology • Brain fuzz edition
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CognitiveHackingZine;

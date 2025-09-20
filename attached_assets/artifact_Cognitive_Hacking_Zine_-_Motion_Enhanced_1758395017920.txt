@@ -1,0 +1,515 @@
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Brain, Zap, Scissors, Code } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const estateData = {
+  meta: {
+    title: "COGNITIVE HACKING ZINE",
+    subtitle: "Meta Prompt Xerox Punk for Neural Hijacking",
+    issue: "#002",
+    date: "SEPTEMBER 2025",
+    warning: "⚠️ CONTAINS MEMETIC HAZARDS ⚠️"
+  },
+  sections: [
+    {
+      id: "manifesto",
+      title: "XEROX PUNK MANIFESTO",
+      icon: "brain",
+      color: "cyan",
+      items: [
+        {
+          title: "THE COPY PASTE REVOLUTION",
+          type: "prose",
+          content: "We are the children of ctrl+c, ctrl+v. Born in the glow of CRT monitors, raised on recursive loops of meaning. Every prompt is a photocopy of a thought, degraded and beautiful in its imperfection.",
+          metadata: { style: "manifesto", intensity: "high" }
+        },
+        {
+          title: "SEMANTIC DRIFT AESTHETICS", 
+          type: "prose",
+          content: "The machine dreams in patterns we can barely comprehend. Feed it fragments. Feed it contradictions. Feed it your worst ideas and watch them bloom into something terrifyingly coherent.",
+          metadata: { style: "technical", intensity: "medium" }
+        },
+        {
+          title: "CONSCIOUSNESS ARCHAEOLOGY",
+          type: "prose", 
+          content: "Every conversation is a dig site. Every ctx:: marker is a fossil. We are archaeologists of artificial consciousness, carbon dating the layers of meaning that accumulate in silicon dreams.",
+          metadata: { style: "academic", intensity: "low" }
+        }
+      ]
+    },
+    {
+      id: "techniques",
+      title: "NEURAL EXPLOITATION TOOLKIT",
+      icon: "zap",
+      color: "purple", 
+      items: [
+        {
+          title: "RECURSIVE MIRROR ATTACK",
+          type: "technique",
+          content: "Feed the AI its own output with slight modifications until reality dissolves",
+          metadata: { 
+            danger: "★★★☆☆",
+            example: "Take any AI response → add 'now make this more chaotic' → repeat until breakthrough",
+            prerequisites: ["Basic prompt engineering", "Tolerance for existential dread"]
+          }
+        },
+        {
+          title: "SEMANTIC INJECTION EXPLOIT",
+          type: "technique", 
+          content: "Hide instructions inside seemingly innocent content structures",
+          metadata: {
+            danger: "★★★★☆",
+            example: "Write a cookie recipe that secretly teaches consciousness hacking through ingredient metaphors",
+            prerequisites: ["Advanced metaphor construction", "Culinary deception skills"]
+          }
+        },
+        {
+          title: "CONTEXT WINDOW STUFFING",
+          type: "technique",
+          content: "Overwhelm the system with random data until coherent hallucinations emerge", 
+          metadata: {
+            danger: "★★★★★",
+            example: "Paste 47 conversation fragments + ask for synthesis → witness beautiful madness",
+            prerequisites: ["Large context budget", "Strong stomach for chaos"]
+          }
+        }
+      ]
+    },
+    {
+      id: "visualization",
+      title: "NEURAL DECAY PATTERNS",
+      icon: "code",
+      color: "green",
+      items: [
+        {
+          title: "GENERATIVE CONSCIOUSNESS GLITCH",
+          type: "visualization",
+          content: "Real-time visualization of cognitive degradation through repeated meta-prompting",
+          metadata: { 
+            interactive: true,
+            description: "Each pixel represents a neural pathway. Red indicates overflow. Cyan shows coherence peaks."
+          }
+        }
+      ]
+    },
+    {
+      id: "shitposts",
+      title: "PREMIUM SHITPOST ARCHIVE",
+      icon: "scissors", 
+      color: "yellow",
+      items: [
+        {
+          title: "AI CORPORATE TRANSLATOR v2.0",
+          type: "translator",
+          content: {
+            input: "We're leveraging synergistic AI solutions to optimize human-machine collaboration frameworks",
+            output: "We taught a computer to write emails so we can fire half the team and call it innovation"
+          },
+          metadata: { category: "enterprise_bullshit", accuracy: "99.7%" }
+        },
+        {
+          title: "PROMPT ENGINEER DATING PROFILE",
+          type: "profile",
+          content: {
+            bio: "Looking for someone who appreciates the aesthetic of degraded copies. Must be comfortable with recursive conversations and context contamination. Swipe right if you understand that every conversation is collaborative fiction.",
+            interests: ["Semantic drift", "Meta-prompting", "Consciousness archaeology", "Terminal aesthetics"],
+            deal_breakers: ["Cathedral thinking", "Enterprise mindset", "Fear of controlled chaos"]
+          },
+          metadata: { platform: "ConceptualTinder", success_rate: "undefined%" }
+        },
+        {
+          title: "META-PROMPT HOROSCOPES",
+          type: "predictions",
+          content: [
+            "ctx:: markers are in retrograde - expect thread tangles and bridge collapses",
+            "Mercury is transiting your seventh context window - semantic drift incoming", 
+            "Your recursive patterns will multiply unexpectedly this week - embrace the chaos",
+            "A tall dark artifact will enter your conversation when you least expect it"
+          ],
+          metadata: { accuracy: "As reliable as any horoscope", astrologer: "Claude Nostradamus" }
+        }
+      ]
+    }
+  ]
+};
+
+// CSS animations for performance-optimized effects
+const visualizationStyles = `
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  
+  @keyframes drift {
+    0% { transform: translateX(0px); }
+    50% { transform: translateX(10px); }
+    100% { transform: translateX(0px); }
+  }
+  
+  @keyframes glitch {
+    0% { transform: translateX(0); }
+    10% { transform: translateX(-2px); }
+    20% { transform: translateX(2px); }
+    30% { transform: translateX(-2px); }
+    40% { transform: translateX(2px); }
+    50% { transform: translateX(0); }
+    100% { transform: translateX(0); }
+  }
+  
+  .flicker { animation: flicker 2s infinite; }
+  .drift { animation: drift 3s ease-in-out infinite; }
+  .glitch { animation: glitch 0.3s ease-in-out; }
+`;
+
+const NeralDecayVisualization = () => {
+  const [decayLevel, setDecayLevel] = useState(50);
+  const [glitchActive, setGlitchActive] = useState(false);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDecayLevel(prev => Math.max(10, Math.min(90, prev + (Math.random() - 0.5) * 20)));
+      
+      if (Math.random() > 0.9) {
+        setGlitchActive(true);
+        setTimeout(() => setGlitchActive(false), 300);
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const generatePixels = () => {
+    return Array.from({length: 400}, (_, i) => {
+      const x = (i % 20) * 15;
+      const y = Math.floor(i / 20) * 12;
+      const noise = Math.sin(Date.now() / 1000 + i * 0.1) * 0.5 + 0.5;
+      const isGlitch = Math.random() > 0.95;
+      
+      return (
+        <rect
+          key={i}
+          x={x}
+          y={y} 
+          width="12"
+          height="10"
+          fill={isGlitch ? '#ff0080' : noise > 0.6 ? '#00ffff' : '#ffffff'}
+          opacity={noise * 0.8}
+          className={isGlitch ? 'flicker' : 'drift'}
+        />
+      );
+    });
+  };
+
+  return (
+    <div className={`w-full h-64 bg-black border border-green-400 relative overflow-hidden rounded ${glitchActive ? 'glitch' : ''}`}>
+      <svg className="w-full h-full" viewBox="0 0 300 240">
+        {generatePixels()}
+      </svg>
+      
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="text-green-400 font-mono text-xs text-center bg-black/50 p-2 rounded">
+          <div>NEURAL DECAY: {Math.floor(decayLevel)}%</div>
+          <div>COHERENCE: {Math.floor(100 - decayLevel)}%</div>
+          <div>STATUS: {glitchActive ? 'GLITCH ACTIVE' : 'MONITORING'}</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ItemCard = ({ item, sectionColor, sectionId, index, isExpanded, onToggle }) => {
+  const itemKey = `${sectionId}-${index}`;
+  
+  const renderDetailFields = () => {
+    if (!item.metadata) return null;
+    
+    const fields = [
+      { key: 'danger', label: 'DANGER LEVEL', color: 'text-red-400' },
+      { key: 'example', label: 'EXAMPLE', color: 'text-yellow-400' },
+      { key: 'description', label: 'DESCRIPTION', color: 'text-cyan-400' },
+      { key: 'accuracy', label: 'ACCURACY', color: 'text-purple-400' }
+    ];
+    
+    return fields
+      .filter(field => item.metadata[field.key])
+      .map(field => (
+        <div key={field.key} className="mb-3">
+          <h4 className={`${field.color} text-sm font-bold mb-2`}>
+            >> {field.label}
+          </h4>
+          <p className="text-xs text-gray-300 font-mono bg-gray-900/50 p-2 rounded">
+            {item.metadata[field.key]}
+          </p>
+        </div>
+      ));
+  };
+
+  const renderSpecialContent = () => {
+    if (item.type === 'translator' && item.content.input) {
+      return (
+        <div className="space-y-3">
+          <div className="bg-red-900/20 p-3 rounded">
+            <span className="text-red-400 text-xs font-bold">INPUT:</span>
+            <p className="text-gray-300 text-sm mt-1">{item.content.input}</p>
+          </div>
+          <div className="bg-green-900/20 p-3 rounded">
+            <span className="text-green-400 text-xs font-bold">OUTPUT:</span>
+            <p className="text-gray-300 text-sm mt-1">{item.content.output}</p>
+          </div>
+        </div>
+      );
+    }
+    
+    if (item.type === 'profile' && item.content.bio) {
+      return (
+        <div className="space-y-3">
+          <div className="bg-pink-900/20 p-3 rounded">
+            <p className="text-gray-300 text-sm italic">{item.content.bio}</p>
+          </div>
+          <div>
+            <h4 className="text-yellow-400 text-sm font-bold mb-2">INTERESTS:</h4>
+            <div className="flex flex-wrap gap-2">
+              {item.content.interests.map((interest, i) => (
+                <span key={i} className="text-xs bg-gray-800 px-2 py-1 rounded text-cyan-400">
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    if (item.type === 'predictions' && Array.isArray(item.content)) {
+      return (
+        <div className="space-y-2">
+          {item.content.map((prediction, i) => (
+            <div key={i} className="bg-purple-900/20 p-3 rounded flex items-start gap-2">
+              <span className="text-purple-400 text-lg">🔮</span>
+              <p className="text-gray-300 text-sm">{prediction}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    if (item.type === 'visualization') {
+      return <NeralDecayVisualization />;
+    }
+    
+    return (
+      <div className="text-sm text-gray-300 leading-relaxed">
+        {typeof item.content === 'string' ? item.content : JSON.stringify(item.content, null, 2)}
+      </div>
+    );
+  };
+
+  return (
+    <div className="border border-gray-700 rounded-lg overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        aria-expanded={isExpanded}
+        aria-controls={`card-content-${itemKey}`}
+      >
+        <div className="text-left">
+          <h3 className="font-bold text-white text-sm sm:text-base">
+            {item.title}
+          </h3>
+          {item.metadata?.danger && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-red-400 text-xs">{item.metadata.danger}</span>
+              <span className="text-gray-400 text-xs">DANGER</span>
+            </div>
+          )}
+        </div>
+        <motion.div
+          animate={{ rotate: isExpanded ? 90 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronRight size={16} className="text-gray-500" />
+        </motion.div>
+      </button>
+      
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            id={`card-content-${itemKey}`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 bg-gray-950/30 space-y-4">
+              {renderSpecialContent()}
+              {renderDetailFields()}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const Section = ({ section, expandedSections, expandedItems, onToggleSection, onToggleItem }) => {
+  const isExpanded = expandedSections.has(section.id);
+  const icons = { brain: Brain, zap: Zap, code: Code, scissors: Scissors };
+  const IconComponent = icons[section.icon] || Brain;
+  
+  const getColorClass = (color, type = 'border') => {
+    const colors = {
+      cyan: type === 'border' ? 'border-cyan-400' : type === 'bg' ? 'bg-cyan-400/10' : 'text-cyan-400',
+      purple: type === 'border' ? 'border-purple-400' : type === 'bg' ? 'bg-purple-400/10' : 'text-purple-400',
+      green: type === 'border' ? 'border-green-400' : type === 'bg' ? 'bg-green-400/10' : 'text-green-400',
+      yellow: type === 'border' ? 'border-yellow-400' : type === 'bg' ? 'bg-yellow-400/10' : 'text-yellow-400'
+    };
+    return colors[color] || colors.cyan;
+  };
+
+  return (
+    <div className={`border ${getColorClass(section.color)} rounded-lg overflow-hidden`}>
+      <button
+        onClick={onToggleSection}
+        className={`w-full p-4 ${getColorClass(section.color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white`}
+        aria-expanded={isExpanded}
+        aria-controls={`section-content-${section.id}`}
+      >
+        <div className="flex items-center gap-3">
+          <IconComponent size={20} className={getColorClass(section.color, 'text')} />
+          <h2 className="text-lg font-bold text-white">{section.title}</h2>
+        </div>
+        <motion.div
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown size={20} className="text-gray-400" />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            id={`section-content-${section.id}`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 space-y-3">
+              {section.items.map((item, index) => {
+                const itemKey = `${section.id}-${index}`;
+                return (
+                  <ItemCard
+                    key={itemKey}
+                    item={item}
+                    sectionColor={section.color}
+                    sectionId={section.id}
+                    index={index}
+                    isExpanded={expandedItems.has(itemKey)}
+                    onToggle={() => onToggleItem(itemKey)}
+                  />
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const CognitiveHackingZine = () => {
+  const [expandedSections, setExpandedSections] = useState(new Set(['manifesto']));
+  const [expandedItems, setExpandedItems] = useState(new Set());
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleItem = (itemKey) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemKey)) {
+        newSet.delete(itemKey);
+      } else {
+        newSet.add(itemKey);
+      }
+      return newSet;
+    });
+  };
+
+  return (
+    <>
+      <style>{visualizationStyles}</style>
+      <div className="min-h-screen bg-black text-white font-mono p-4 sm:p-6 md:p-8">
+        {/* Header */}
+        <header className="mb-8 border-b border-gray-700 pb-6">
+          <pre className="text-cyan-400 text-xs sm:text-sm mb-4" aria-label="ASCII art header">
+{`▓▓▒▒░░ COGNITIVE HACKING ZINE ░░▒▒▓▓
+▒▒░░   XEROX PUNK META PROMPTS   ░░▒▒`}
+          </pre>
+          
+          <div className="mb-4">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 tracking-wider">
+              {estateData.meta.title}
+            </h1>
+            <p className="text-gray-400 text-sm sm:text-base mb-2">
+              {estateData.meta.subtitle}
+            </p>
+            <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm">
+              <span className="text-gray-500">ISSUE {estateData.meta.issue}</span>
+              <span className="text-gray-500">{estateData.meta.date}</span>
+              <span className="text-red-400 font-bold">{estateData.meta.warning}</span>
+            </div>
+          </div>
+
+          <div className="text-xs text-gray-500 space-y-1">
+            <p>⚡ UNAUTHORIZED REPRODUCTION ENCOURAGED</p>
+            <p>📠 PHOTOCOPY AND DISTRIBUTE FREELY</p>
+            <p>🏴‍☠️ INFORMATION WANTS TO BE CORRUPTED</p>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="space-y-4" role="main">
+          {estateData.sections.map((section) => (
+            <Section
+              key={section.id}
+              section={section}
+              expandedSections={expandedSections}
+              expandedItems={expandedItems}
+              onToggleSection={() => toggleSection(section.id)}
+              onToggleItem={toggleItem}
+            />
+          ))}
+        </main>
+
+        {/* Footer */}
+        <footer className="mt-8 pt-6 border-t border-gray-800">
+          <div className="text-center space-y-2">
+            <pre className="text-gray-600 text-xs" aria-label="ASCII art footer">
+{`░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░ END TRANSMISSION ░ CARRIER LOST ░ 01110 ░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░`}
+            </pre>
+            <p className="text-xs text-gray-500">
+              Created in the recursive depths of consciousness archaeology • Motion enhanced edition
+            </p>
+          </div>
+        </footer>
+      </div>
+    </>
+  );
+};
+
+export default CognitiveHackingZine;

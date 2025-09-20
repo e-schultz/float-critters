@@ -1,0 +1,621 @@
+import React, { useState } from 'react';
+import { Circle, Square, Triangle, Zap, Battery, ChevronDown, ChevronRight, ArrowRight, FileText, Code, Users, Settings } from 'lucide-react';
+
+const taxonomyData = {
+  "meta": { 
+    "title": "Content-Type Taxonomy", 
+    "subtitle": "Shared vocabulary for meta-prompt generation patterns",
+    "version": "1.0.0",
+    "context": "Brain fuzz defuzzing - systematic approach to content transformation"
+  },
+  "concepts": [
+    { 
+      "id": "ctt", 
+      "name": "Content-Type Taxonomy", 
+      "summary": "Shared vocabulary for meta-prompt generation across conversation contexts.",
+      "scope": "Framework for identifying, categorizing, and transforming conversational content into structured artifacts"
+    },
+    { 
+      "id": "fuzzy-compilation", 
+      "name": "Fuzzy Compilation", 
+      "summary": "Process of transforming unstructured conversation into structured output.",
+      "scope": "Natural language + syntax → structured artifacts with preserved context"
+    },
+    { 
+      "id": "mid-conversation-artifacts", 
+      "name": "Mid-Conversation Artifacts", 
+      "summary": "Generated content that emerges organically during dialogue.",
+      "scope": "Reactive content generation based on conversation momentum and recognized patterns"
+    },
+    { 
+      "id": "context-archaeology", 
+      "name": "Context Archaeology", 
+      "summary": "Systematic recovery of conversation threads and pattern continuity.",
+      "scope": "Bridge creation, thread reconstruction, and semantic continuity across sessions"
+    }
+  ],
+  "principles": [
+    { 
+      "id": "p-minimality", 
+      "statement": "Minimize type proliferation.", 
+      "rationale": "Reduces cognitive load and maintains system coherence during brain fuzz states.",
+      "application": "Four canonical content types: Conversation, Documentation, Interactive, Implementation"
+    },
+    { 
+      "id": "p-progressive-disclosure", 
+      "statement": "Layer information by cognitive demand.", 
+      "rationale": "Accommodate varying mental capacity and context switching.",
+      "application": "Essential info visible, detailed patterns expandable, complexity on-demand"
+    },
+    { 
+      "id": "p-pattern-preservation", 
+      "statement": "Maintain semantic bridges across transformations.", 
+      "rationale": "Context contamination becomes feature, not bug.",
+      "application": "ctx:: markers, bridge:: references, pattern:: inheritance across artifacts"
+    },
+    { 
+      "id": "p-device-agnostic", 
+      "statement": "Content works across interaction contexts.", 
+      "rationale": "Brain state and device context are independent variables.",
+      "application": "Mobile-first responsive, touch-friendly, readable across screen sizes"
+    }
+  ],
+  "patterns": [
+    {
+      "id": "pat-signature",
+      "name": "Content Type Signature",
+      "problem": "Inconsistent fields across content types lead to transformation friction.",
+      "solution": "Mandate {purpose, audience, scope, constraints} for all content transformations.",
+      "signals": ["Frequent field drift", "Review friction", "Inconsistent artifact quality"],
+      "tradeoffs": ["Less flexibility early", "More cognitive overhead during setup"],
+      "examples": [
+        { "id": "ex1", "title": "RFC prompt signature", "desc": "Purpose: standardization, Audience: developers, Scope: protocol definition" }
+      ],
+      "applies_to": ["concept:ctt", "principle:p-minimality"]
+    },
+    {
+      "id": "pat-fuzzy-compilation",
+      "name": "Fuzzy Compilation Pattern",
+      "problem": "Natural language contains valuable structure that gets lost in transformation.",
+      "solution": "Enhance user input with proper syntax while preserving conversational context.",
+      "signals": ["Raw text without patterns", "Missing structured syntax", "Context loss during capture"],
+      "tradeoffs": ["Additional processing overhead", "Risk of over-structuring casual content"],
+      "examples": [
+        { "id": "ex2", "title": "ctx:: enhancement", "desc": "User: 'working on pharmacy project' → 'ctx:: 2025-09-18 [project::pharmacy] system implementation'" }
+      ],
+      "applies_to": ["concept:fuzzy-compilation", "principle:p-pattern-preservation"]
+    },
+    {
+      "id": "pat-reactive-generation",
+      "name": "Reactive Artifact Generation",
+      "problem": "Valuable content emerges mid-conversation but gets lost without capture.",
+      "solution": "Recognize crystallization moments and generate artifacts reactively.",
+      "signals": ["Repeated explanations", "Framework requests", "Taxonomy emergence", "Visual design discussions"],
+      "tradeoffs": ["Interrupts conversation flow", "May generate premature artifacts"],
+      "examples": [
+        { "id": "ex3", "title": "Mid-conversation microsite", "desc": "Design discussion → full responsive website artifact within conversation" }
+      ],
+      "applies_to": ["concept:mid-conversation-artifacts", "principle:p-progressive-disclosure"]
+    }
+  ],
+  "practices": [
+    {
+      "id": "prac-pattern-recognition",
+      "name": "Pattern Recognition Protocol",
+      "protocol": {
+        "preconditions": ["Conversation context available", "Pattern signals detected"],
+        "steps": [
+          "Identify crystallization moment",
+          "Extract core patterns", 
+          "Apply appropriate content type",
+          "Generate structured artifact",
+          "Preserve conversation continuity"
+        ],
+        "postconditions": ["Artifact integrates with conversation", "Patterns captured for reuse"]
+      },
+      "metrics": [
+        { "name": "pattern_recognition_accuracy", "goal": ">=85%" },
+        { "name": "artifact_generation_time", "goal": "<=30s" }
+      ]
+    },
+    {
+      "id": "prac-context-archaeology",
+      "name": "Context Archaeological Method",
+      "protocol": {
+        "preconditions": ["Thread continuity gaps detected", "Bridge creation needed"],
+        "steps": [
+          "Surface recent context",
+          "Search conversation history", 
+          "Identify pattern connections",
+          "Create semantic bridges",
+          "Validate continuity"
+        ],
+        "postconditions": ["Thread continuity restored", "Context contamination preserved as feature"]
+      },
+      "metrics": [
+        { "name": "context_recovery_success", "goal": ">=90%" },
+        { "name": "bridge_creation_time", "goal": "<=60s" }
+      ]
+    },
+    {
+      "id": "prac-brain-fuzz-accommodation",
+      "name": "Brain Fuzz Accommodation Protocol", 
+      "protocol": {
+        "preconditions": ["Cognitive load indicators detected", "Hit-by-truck feelings"],
+        "steps": [
+          "Switch to gentle recovery mode",
+          "Reduce visual complexity",
+          "Minimize decision points",
+          "Provide essential info only",
+          "Maintain progress without pressure"
+        ],
+        "postconditions": ["Cognitive load reduced", "Forward momentum maintained"]
+      },
+      "metrics": [
+        { "name": "accommodation_response_time", "goal": "immediate" },
+        { "name": "complexity_reduction", "goal": ">=50%" }
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "title": "Four canonical content types",
+      "context": "Early taxonomy development phase - need structure without proliferation",
+      "options": [
+        "4 fixed types (Conversation, Documentation, Interactive, Implementation)",
+        "Unbounded type system with registration"
+      ],
+      "decision": "4 fixed types with subpattern flexibility",
+      "consequences": [
+        "Simpler cognitive model", 
+        "Easier pattern recognition",
+        "Migration path for edge cases",
+        "Potential forcing of content into wrong categories"
+      ],
+      "status": "accepted",
+      "evidence": ["benchmark:conversation-analysis", "user-feedback:cognitive-load"]
+    },
+    {
+      "id": "adr-002", 
+      "title": "Mobile-first responsive design mandate",
+      "context": "Brain state and device context independent - need consistency across platforms",
+      "options": [
+        "Desktop-first with mobile adaptation",
+        "Mobile-first with progressive enhancement",
+        "Separate mobile/desktop experiences"
+      ],
+      "decision": "Mobile-first with progressive enhancement",
+      "consequences": [
+        "Consistent experience across devices",
+        "Touch-friendly interactions",
+        "Improved accessibility",
+        "Some desktop optimization tradeoffs"
+      ],
+      "status": "accepted", 
+      "evidence": ["usage-analytics:device-distribution", "feedback:brain-fuzz-mobile-usage"]
+    },
+    {
+      "id": "adr-003",
+      "title": "Context contamination as feature",
+      "context": "Semantic bleed between conversations initially seen as bug",
+      "options": [
+        "Strict context isolation",
+        "Controlled context sharing",
+        "Full semantic contamination acceptance"
+      ],
+      "decision": "Controlled context sharing with bridge creation",
+      "consequences": [
+        "Richer cross-conversation insights",
+        "Better pattern recognition",
+        "Potential confusion without proper bridges",
+        "More complex context management"
+      ],
+      "status": "accepted",
+      "evidence": ["experiment:bridge-walker", "success:consciousness-technology-validation"]
+    }
+  ],
+  "relations": [
+    { "from": "pat-signature", "to": "p-minimality", "type": "supports", "strength": "strong" },
+    { "from": "adr-001", "to": "pat-signature", "type": "enables", "strength": "direct" },
+    { "from": "pat-fuzzy-compilation", "to": "p-pattern-preservation", "type": "implements", "strength": "core" },
+    { "from": "prac-brain-fuzz-accommodation", "to": "p-progressive-disclosure", "type": "applies", "strength": "strong" },
+    { "from": "adr-003", "to": "concept:context-archaeology", "type": "validates", "strength": "foundational" }
+  ],
+  "references": [
+    { "id": "doc-42", "title": "Conversation archaeology benchmarks", "url": "#", "type": "evidence" },
+    { "id": "float-manifesto", "title": "FLOAT recursive consciousness loop", "url": "#", "type": "foundation" },
+    { "id": "bridge-walker-report", "title": "Context contamination field validation", "url": "#", "type": "validation" },
+    { "id": "brain-fuzz-analysis", "title": "Cognitive load accommodation study", "url": "#", "type": "research" }
+  ]
+};
+
+const ContentTypeTaxonomy = () => {
+  const [expandedSections, setExpandedSections] = useState(new Set(['concepts']));
+  const [expandedItems, setExpandedItems] = useState(new Set());
+
+  const toggleSection = (sectionId) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  const toggleItem = (itemKey) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemKey)) {
+      newExpanded.delete(itemKey);
+    } else {
+      newExpanded.add(itemKey);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  const getSectionIcon = (sectionName) => {
+    switch (sectionName) {
+      case 'concepts': return Circle;
+      case 'principles': return Square;
+      case 'patterns': return Triangle;
+      case 'practices': return Settings;
+      case 'decisions': return FileText;
+      case 'relations': return ArrowRight;
+      case 'references': return Code;
+      default: return Circle;
+    }
+  };
+
+  const getSectionColor = (sectionName) => {
+    switch (sectionName) {
+      case 'concepts': return 'cyan';
+      case 'principles': return 'purple';
+      case 'patterns': return 'green';
+      case 'practices': return 'yellow';
+      case 'decisions': return 'cyan';
+      case 'relations': return 'purple';
+      case 'references': return 'green';
+      default: return 'cyan';
+    }
+  };
+
+  const getColorClasses = (color, type = 'border') => {
+    const colors = {
+      cyan: type === 'border' ? 'border-cyan-400' : type === 'bg' ? 'bg-cyan-400/10' : 'text-cyan-400',
+      purple: type === 'border' ? 'border-purple-400' : type === 'bg' ? 'bg-purple-400/10' : 'text-purple-400',
+      green: type === 'border' ? 'border-green-400' : type === 'bg' ? 'bg-green-400/10' : 'text-green-400',
+      yellow: type === 'border' ? 'border-yellow-400' : type === 'bg' ? 'bg-yellow-400/10' : 'text-yellow-400'
+    };
+    return colors[color] || colors.cyan;
+  };
+
+  const renderSection = (sectionName, items, renderItem) => {
+    const IconComponent = getSectionIcon(sectionName);
+    const color = getSectionColor(sectionName);
+    const isExpanded = expandedSections.has(sectionName);
+
+    return (
+      <div key={sectionName} className={`border ${getColorClasses(color)} rounded-lg overflow-hidden`}>
+        <button
+          onClick={() => toggleSection(sectionName)}
+          className={`w-full p-4 ${getColorClasses(color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200`}
+        >
+          <div className="flex items-center gap-3">
+            <IconComponent size={20} className={getColorClasses(color, 'text')} />
+            <h2 className="text-lg font-bold text-white capitalize">
+              {sectionName}
+            </h2>
+            <span className="text-xs text-gray-400">({items.length})</span>
+          </div>
+          {isExpanded ? 
+            <ChevronDown size={20} className="text-gray-400" /> : 
+            <ChevronRight size={20} className="text-gray-400" />
+          }
+        </button>
+
+        {isExpanded && (
+          <div className="p-4 space-y-3">
+            {items.map((item, index) => renderItem(item, index, sectionName))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderConcept = (concept, index, section) => {
+    const itemKey = `${section}-${index}`;
+    const isExpanded = expandedItems.has(itemKey);
+
+    return (
+      <div key={itemKey} className="border border-gray-700 rounded-lg overflow-hidden">
+        <button
+          onClick={() => toggleItem(itemKey)}
+          className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+        >
+          <div className="text-left">
+            <h3 className="font-bold text-white text-sm sm:text-base">{concept.name}</h3>
+            <p className="text-gray-400 text-xs sm:text-sm mt-1">{concept.summary}</p>
+          </div>
+          {isExpanded ? 
+            <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-2" /> : 
+            <ChevronRight size={16} className="text-gray-500 flex-shrink-0 ml-2" />
+          }
+        </button>
+        {isExpanded && (
+          <div className="p-4 bg-gray-950/30">
+            <div className="mb-2">
+              <h4 className="text-cyan-400 text-sm font-bold mb-2">SCOPE</h4>
+              <p className="text-xs sm:text-sm text-gray-300">{concept.scope}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderPrinciple = (principle, index, section) => {
+    const itemKey = `${section}-${index}`;
+    const isExpanded = expandedItems.has(itemKey);
+
+    return (
+      <div key={itemKey} className="border border-gray-700 rounded-lg overflow-hidden">
+        <button
+          onClick={() => toggleItem(itemKey)}
+          className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+        >
+          <div className="text-left">
+            <h3 className="font-bold text-white text-sm sm:text-base">{principle.statement}</h3>
+            <p className="text-gray-400 text-xs sm:text-sm mt-1">{principle.rationale}</p>
+          </div>
+          {isExpanded ? 
+            <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-2" /> : 
+            <ChevronRight size={16} className="text-gray-500 flex-shrink-0 ml-2" />
+          }
+        </button>
+        {isExpanded && (
+          <div className="p-4 bg-gray-950/30">
+            <div className="mb-2">
+              <h4 className="text-purple-400 text-sm font-bold mb-2">APPLICATION</h4>
+              <p className="text-xs sm:text-sm text-gray-300">{principle.application}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderPattern = (pattern, index, section) => {
+    const itemKey = `${section}-${index}`;
+    const isExpanded = expandedItems.has(itemKey);
+
+    return (
+      <div key={itemKey} className="border border-gray-700 rounded-lg overflow-hidden">
+        <button
+          onClick={() => toggleItem(itemKey)}
+          className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+        >
+          <div className="text-left">
+            <h3 className="font-bold text-white text-sm sm:text-base">{pattern.name}</h3>
+            <p className="text-gray-400 text-xs sm:text-sm mt-1">{pattern.problem}</p>
+          </div>
+          {isExpanded ? 
+            <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-2" /> : 
+            <ChevronRight size={16} className="text-gray-500 flex-shrink-0 ml-2" />
+          }
+        </button>
+        {isExpanded && (
+          <div className="p-4 bg-gray-950/30 space-y-4">
+            <div>
+              <h4 className="text-green-400 text-sm font-bold mb-2">SOLUTION</h4>
+              <p className="text-xs sm:text-sm text-gray-300">{pattern.solution}</p>
+            </div>
+            <div>
+              <h4 className="text-yellow-400 text-sm font-bold mb-2">SIGNALS</h4>
+              <ul className="text-xs sm:text-sm text-gray-300 space-y-1">
+                {pattern.signals.map((signal, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <span className="text-yellow-400">•</span>
+                    {signal}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {pattern.examples && (
+              <div>
+                <h4 className="text-cyan-400 text-sm font-bold mb-2">EXAMPLES</h4>
+                {pattern.examples.map((example, i) => (
+                  <div key={i} className="text-xs sm:text-sm text-gray-300 mb-2">
+                    <span className="font-medium">{example.title}:</span> {example.desc}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderPractice = (practice, index, section) => {
+    const itemKey = `${section}-${index}`;
+    const isExpanded = expandedItems.has(itemKey);
+
+    return (
+      <div key={itemKey} className="border border-gray-700 rounded-lg overflow-hidden">
+        <button
+          onClick={() => toggleItem(itemKey)}
+          className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+        >
+          <div className="text-left">
+            <h3 className="font-bold text-white text-sm sm:text-base">{practice.name}</h3>
+          </div>
+          {isExpanded ? 
+            <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-2" /> : 
+            <ChevronRight size={16} className="text-gray-500 flex-shrink-0 ml-2" />
+          }
+        </button>
+        {isExpanded && (
+          <div className="p-4 bg-gray-950/30 space-y-4">
+            <div>
+              <h4 className="text-yellow-400 text-sm font-bold mb-2">PROTOCOL</h4>
+              <div className="space-y-2 text-xs sm:text-sm text-gray-300">
+                <div><span className="font-medium">Preconditions:</span> {practice.protocol.preconditions.join(', ')}</div>
+                <div><span className="font-medium">Steps:</span>
+                  <ol className="ml-4 mt-1 list-decimal space-y-1">
+                    {practice.protocol.steps.map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+                <div><span className="font-medium">Postconditions:</span> {practice.protocol.postconditions.join(', ')}</div>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-cyan-400 text-sm font-bold mb-2">METRICS</h4>
+              {practice.metrics.map((metric, i) => (
+                <div key={i} className="text-xs sm:text-sm text-gray-300">
+                  <span className="font-medium">{metric.name}:</span> {metric.goal}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderDecision = (decision, index, section) => {
+    const itemKey = `${section}-${index}`;
+    const isExpanded = expandedItems.has(itemKey);
+
+    return (
+      <div key={itemKey} className="border border-gray-700 rounded-lg overflow-hidden">
+        <button
+          onClick={() => toggleItem(itemKey)}
+          className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+        >
+          <div className="text-left">
+            <h3 className="font-bold text-white text-sm sm:text-base">{decision.title}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-xs px-2 py-1 rounded ${
+                decision.status === 'accepted' ? 'bg-green-600 text-white' : 'bg-yellow-600 text-white'
+              }`}>
+                {decision.status}
+              </span>
+              <span className="text-gray-400 text-xs">{decision.id}</span>
+            </div>
+          </div>
+          {isExpanded ? 
+            <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-2" /> : 
+            <ChevronRight size={16} className="text-gray-500 flex-shrink-0 ml-2" />
+          }
+        </button>
+        {isExpanded && (
+          <div className="p-4 bg-gray-950/30 space-y-4">
+            <div>
+              <h4 className="text-cyan-400 text-sm font-bold mb-2">CONTEXT</h4>
+              <p className="text-xs sm:text-sm text-gray-300">{decision.context}</p>
+            </div>
+            <div>
+              <h4 className="text-purple-400 text-sm font-bold mb-2">DECISION</h4>
+              <p className="text-xs sm:text-sm text-gray-300">{decision.decision}</p>
+            </div>
+            <div>
+              <h4 className="text-yellow-400 text-sm font-bold mb-2">CONSEQUENCES</h4>
+              <ul className="text-xs sm:text-sm text-gray-300 space-y-1">
+                {decision.consequences.map((consequence, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <span className="text-yellow-400">•</span>
+                    {consequence}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderRelation = (relation, index, section) => {
+    return (
+      <div key={`${section}-${index}`} className="border border-gray-700 rounded-lg p-3 bg-gray-900/30">
+        <div className="flex items-center gap-3 text-xs sm:text-sm">
+          <code className="text-purple-400">{relation.from}</code>
+          <ArrowRight size={14} className="text-gray-500" />
+          <span className="text-yellow-400">{relation.type}</span>
+          <ArrowRight size={14} className="text-gray-500" />
+          <code className="text-green-400">{relation.to}</code>
+          {relation.strength && (
+            <span className="text-gray-400">({relation.strength})</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderReference = (reference, index, section) => {
+    return (
+      <div key={`${section}-${index}`} className="border border-gray-700 rounded-lg p-3 bg-gray-900/30">
+        <div className="text-xs sm:text-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <code className="text-green-400">{reference.id}</code>
+            <span className="text-gray-400 text-xs">({reference.type})</span>
+          </div>
+          <div className="text-gray-300">{reference.title}</div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white font-mono p-4 sm:p-6 md:p-8">
+      {/* ASCII Header */}
+      <div className="mb-8">
+        <pre className="text-cyan-400 text-xs sm:text-sm mb-4">
+{`▓▓▒▒░░ CONTENT-TYPE TAXONOMY ░░▒▒▓▓
+▒▒░░    META PROMPT FRAMEWORK    ░░▒▒`}
+        </pre>
+        
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
+            {taxonomyData.meta.title}
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base mb-2">
+            {taxonomyData.meta.subtitle}
+          </p>
+          <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-500">
+            <span>v{taxonomyData.meta.version}</span>
+            <span>{taxonomyData.meta.context}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="space-y-4">
+        {renderSection('concepts', taxonomyData.concepts, renderConcept)}
+        {renderSection('principles', taxonomyData.principles, renderPrinciple)}
+        {renderSection('patterns', taxonomyData.patterns, renderPattern)}
+        {renderSection('practices', taxonomyData.practices, renderPractice)}
+        {renderSection('decisions', taxonomyData.decisions, renderDecision)}
+        {renderSection('relations', taxonomyData.relations, renderRelation)}
+        {renderSection('references', taxonomyData.references, renderReference)}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 pt-6 border-t border-gray-800">
+        <div className="text-xs text-gray-500 space-y-2">
+          <p>
+            Systematic approach to content transformation: fuzzy compilation → structured artifacts → quality assurance.
+          </p>
+          <p>
+            Framework supports brain fuzz accommodation, context archaeology, and mid-conversation artifact generation.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ContentTypeTaxonomy;

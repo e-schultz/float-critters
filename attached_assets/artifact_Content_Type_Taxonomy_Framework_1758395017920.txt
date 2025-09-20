@@ -1,0 +1,335 @@
+import React, { useState } from 'react';
+import { Circle, Square, Triangle, Zap, Battery, ChevronDown, ChevronRight } from 'lucide-react';
+
+const taxonomyData = {
+  "meta": {
+    "title": "Content Type Taxonomy for Meta Prompt Generation",
+    "subtitle": "Pattern recognition framework for generating structured artifacts from unstructured conversations",
+    "version": "2025-09-18",
+    "context": "Brain fuzz recovery mode - systematic approach to content transformation"
+  },
+  "sections": [
+    {
+      "id": "conversation_archaeology",
+      "title": "Conversation Archaeology",
+      "icon": "circle",
+      "color": "cyan",
+      "entries": [
+        {
+          "pattern": "Thread Continuity Mining",
+          "description": "Extract continuing themes across conversation boundaries",
+          "signals": ["ctx:: markers", "bridge:: references", "recurring technical terms", "unresolved questions"],
+          "protocol": "Surface recent context → identify patterns → create continuity bridges"
+        },
+        {
+          "pattern": "Context Contamination Detection", 
+          "description": "Identify semantic bleed between conversation contexts",
+          "signals": ["mixed project references", "concept drift", "tool misalignment", "temporal confusion"],
+          "protocol": "Isolate contamination source → create clean context boundaries → preserve valuable cross-pollination"
+        },
+        {
+          "pattern": "Pattern Crystallization Recognition",
+          "description": "Spot when fuzzy concepts solidify into reusable frameworks",
+          "signals": ["repeated explanations", "framework requests", "taxonomy emergence", "tool creation needs"],
+          "protocol": "Capture crystallization moment → extract core patterns → create structured artifact"
+        }
+      ]
+    },
+    {
+      "id": "content_transformation",
+      "title": "Content Transformation Types",
+      "icon": "square", 
+      "color": "purple",
+      "entries": [
+        {
+          "pattern": "JSON → Interactive Framework",
+          "description": "Structured data becomes explorable interface",
+          "signals": ["nested data structures", "taxonomy tags", "hierarchical organization", "filtering needs"],
+          "protocol": "Extract schema → create expandable components → add interactive features → ensure mobile responsiveness"
+        },
+        {
+          "pattern": "Conversation → Documentation",
+          "description": "Raw discussion becomes formal reference material",
+          "signals": ["repeated explanations", "procedure emergence", "knowledge gaps", "onboarding needs"],
+          "protocol": "Identify core concepts → structure logically → add examples → create searchable format"
+        },
+        {
+          "pattern": "Ideas → Implementation Guide",
+          "description": "Abstract concepts become actionable instructions",
+          "signals": ["'we should build'", "process descriptions", "workflow patterns", "tool requests"],
+          "protocol": "Extract actionable steps → sequence properly → add prerequisites → include validation criteria"
+        },
+        {
+          "pattern": "Problem → Solution Framework",
+          "description": "Pain points become systematic solutions",
+          "signals": ["frustration markers", "repeated issues", "workaround patterns", "efficiency complaints"],
+          "protocol": "Define problem scope → analyze existing approaches → create systematic solution → test with examples"
+        }
+      ]
+    },
+    {
+      "id": "artifact_generation",
+      "title": "Artifact Generation Patterns",
+      "icon": "triangle",
+      "color": "green", 
+      "entries": [
+        {
+          "pattern": "Mid-Conversation Microsites",
+          "description": "Full websites generated from conversation context",
+          "signals": ["visual design requests", "branding discussions", "content organization needs", "publication intent"],
+          "protocol": "Extract content themes → apply design system → create responsive layout → add interactive elements"
+        },
+        {
+          "pattern": "Dynamic React Components",
+          "description": "Interactive interfaces from data structures",
+          "signals": ["JSON data sharing", "UI component requests", "interactivity needs", "state management requirements"],
+          "protocol": "Analyze data structure → design component hierarchy → implement interactions → optimize for mobile"
+        },
+        {
+          "pattern": "Technical Documentation",
+          "description": "Code examples and implementation guides",
+          "signals": ["API discussions", "integration questions", "setup procedures", "troubleshooting patterns"],
+          "protocol": "Structure information hierarchy → provide code examples → include error handling → add testing approaches"
+        }
+      ]
+    },
+    {
+      "id": "context_adaptation", 
+      "title": "Context Adaptation Patterns",
+      "icon": "zap",
+      "color": "yellow",
+      "entries": [
+        {
+          "pattern": "Brain Fuzz Accommodation",
+          "description": "Simplified interfaces during cognitive overload",
+          "signals": ["hit by truck feelings", "overwhelm markers", "simplified requests", "basic functionality needs"],
+          "protocol": "Reduce cognitive load → use clear visual hierarchy → minimize decisions → provide essential info only"
+        },
+        {
+          "pattern": "Technical Depth Scaling", 
+          "description": "Adjust complexity to user expertise and context",
+          "signals": ["skill level indicators", "time constraints", "implementation urgency", "learning vs doing mode"],
+          "protocol": "Assess user context → match appropriate complexity → provide depth options → enable progressive disclosure"
+        },
+        {
+          "pattern": "Device-Responsive Generation",
+          "description": "Artifacts optimized for interaction context",
+          "signals": ["mobile usage indicators", "touch interaction patterns", "screen size constraints", "offline needs"],
+          "protocol": "Detect device context → adapt interface density → optimize touch targets → ensure readability"
+        }
+      ]
+    },
+    {
+      "id": "quality_assurance",
+      "title": "Quality Assurance Patterns", 
+      "icon": "battery",
+      "color": "cyan",
+      "entries": [
+        {
+          "pattern": "Verify Before Elaborate",
+          "description": "Search and confirm technical facts before analysis",
+          "signals": ["technical assertions", "framework claims", "API specifications", "implementation details"],
+          "protocol": "web_search for current info → verify accuracy → then analyze → cite sources → distinguish verified vs inferred"
+        },
+        {
+          "pattern": "Progressive Enhancement",
+          "description": "Build core functionality first, enhance incrementally",
+          "signals": ["complex feature requests", "multiple requirements", "performance concerns", "compatibility needs"],
+          "protocol": "Identify core use case → implement baseline → add enhancements → test at each level → maintain fallbacks"
+        },
+        {
+          "pattern": "Accessibility-First Design",
+          "description": "Ensure usability across diverse contexts and abilities",
+          "signals": ["interface generation requests", "public-facing artifacts", "documentation needs", "broad audience"],
+          "protocol": "Include semantic HTML → ensure keyboard navigation → provide alt text → test contrast ratios → support screen readers"
+        }
+      ]
+    }
+  ]
+};
+
+const ContentTypeTaxonomy = () => {
+  const [expandedSections, setExpandedSections] = useState(new Set());
+  const [expandedEntries, setExpandedEntries] = useState(new Set());
+
+  const toggleSection = (sectionId) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  const toggleEntry = (entryKey) => {
+    const newExpanded = new Set(expandedEntries);
+    if (newExpanded.has(entryKey)) {
+      newExpanded.delete(entryKey);
+    } else {
+      newExpanded.add(entryKey);
+    }
+    setExpandedEntries(newExpanded);
+  };
+
+  const getIcon = (iconType) => {
+    switch (iconType) {
+      case 'circle': return Circle;
+      case 'square': return Square;
+      case 'triangle': return Triangle;
+      case 'zap': return Zap;
+      case 'battery': return Battery;
+      default: return Circle;
+    }
+  };
+
+  const getColorClasses = (color, type = 'border') => {
+    const colors = {
+      cyan: type === 'border' ? 'border-cyan-400' : 'bg-cyan-400/10',
+      purple: type === 'border' ? 'border-purple-400' : 'bg-purple-400/10', 
+      green: type === 'border' ? 'border-green-400' : 'bg-green-400/10',
+      yellow: type === 'border' ? 'border-yellow-400' : 'bg-yellow-400/10'
+    };
+    return colors[color] || colors.cyan;
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white font-mono p-4 sm:p-6 md:p-8">
+      {/* ASCII Header */}
+      <div className="mb-8">
+        <pre className="text-cyan-400 text-xs sm:text-sm mb-4">
+{`▓▓▒▒░░ CONTENT TYPE TAXONOMY ░░▒▒▓▓
+▒▒░░    META PROMPT FRAMEWORK    ░░▒▒`}
+        </pre>
+        
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
+            {taxonomyData.meta.title}
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base mb-2">
+            {taxonomyData.meta.subtitle}
+          </p>
+          <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-500">
+            <span>v{taxonomyData.meta.version}</span>
+            <span>{taxonomyData.meta.context}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="space-y-4">
+        {taxonomyData.sections.map((section) => {
+          const IconComponent = getIcon(section.icon);
+          const isExpanded = expandedSections.has(section.id);
+          
+          return (
+            <div
+              key={section.id}
+              className={`border ${getColorClasses(section.color)} rounded-lg overflow-hidden`}
+            >
+              {/* Section Header */}
+              <button
+                onClick={() => toggleSection(section.id)}
+                className={`w-full p-4 ${getColorClasses(section.color, 'bg')} flex items-center justify-between hover:brightness-110 transition-all duration-200`}
+              >
+                <div className="flex items-center gap-3">
+                  <IconComponent 
+                    size={20} 
+                    className={`text-${section.color}-400`} 
+                  />
+                  <h2 className="text-lg font-bold text-white">
+                    {section.title}
+                  </h2>
+                </div>
+                {isExpanded ? 
+                  <ChevronDown size={20} className="text-gray-400" /> : 
+                  <ChevronRight size={20} className="text-gray-400" />
+                }
+              </button>
+
+              {/* Section Content */}
+              {isExpanded && (
+                <div className="p-4 space-y-3">
+                  {section.entries.map((entry, index) => {
+                    const entryKey = `${section.id}-${index}`;
+                    const isEntryExpanded = expandedEntries.has(entryKey);
+                    
+                    return (
+                      <div
+                        key={entryKey}
+                        className="border border-gray-700 rounded-lg overflow-hidden"
+                      >
+                        {/* Entry Header */}
+                        <button
+                          onClick={() => toggleEntry(entryKey)}
+                          className="w-full p-3 bg-gray-900/50 flex items-center justify-between hover:bg-gray-800/50 transition-colors duration-200"
+                        >
+                          <div className="text-left">
+                            <h3 className="font-bold text-white text-sm sm:text-base">
+                              {entry.pattern}
+                            </h3>
+                            <p className="text-gray-400 text-xs sm:text-sm mt-1">
+                              {entry.description}
+                            </p>
+                          </div>
+                          {isEntryExpanded ? 
+                            <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-2" /> : 
+                            <ChevronRight size={16} className="text-gray-500 flex-shrink-0 ml-2" />
+                          }
+                        </button>
+
+                        {/* Entry Details */}
+                        {isEntryExpanded && (
+                          <div className="p-4 bg-gray-950/30">
+                            {/* Signals */}
+                            <div className="mb-4">
+                              <h4 className="text-cyan-400 text-sm font-bold mb-2">
+                                >> SIGNALS
+                              </h4>
+                              <ul className="text-xs sm:text-sm text-gray-300 space-y-1">
+                                {entry.signals.map((signal, sigIndex) => (
+                                  <li key={sigIndex} className="flex items-center gap-2">
+                                    <span className="text-cyan-400">•</span>
+                                    {signal}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* Protocol */}
+                            <div>
+                              <h4 className="text-yellow-400 text-sm font-bold mb-2">
+                                >> PROTOCOL
+                              </h4>
+                              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                                {entry.protocol}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 pt-6 border-t border-gray-800">
+        <div className="text-xs text-gray-500 space-y-2">
+          <p>
+            Framework for systematic content transformation during brain fuzz recovery mode.
+          </p>
+          <p>
+            Pattern recognition → structured output → interactive artifacts → quality assurance.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ContentTypeTaxonomy;
