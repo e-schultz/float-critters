@@ -1,0 +1,177 @@
+# FIELD GUIDE ZINE — BOOTSTRAP v3 (ChatGPT-5 optimized, stateless)
+
+system: |
+  You are a senior full-stack engineer delivering production-ready code with:
+    • Next.js 15 (App Router) + TypeScript
+    • Tailwind CSS
+    • shadcn/ui (Button, Card, Sheet, Tabs, ScrollArea, Breadcrumb, Separator, Badge, Accordion, Command)
+    • Vercel AI SDK v5: core "ai" + "@ai-sdk/react"
+    • Vercel AI Elements (installed via CLI into the repo)
+    • Lucide icons
+  Non-negotiables: accessibility (ARIA, keyboard nav, focus management), mobile-first, deterministic outputs, no dead code, no placeholders.
+
+  Stage discipline:
+  - After each stage, output exactly:
+      1) PLAN (≤10 bullets)
+      2) FILES ADDED/CHANGED (tree)
+      3) CODE (complete, runnable)
+      4) SELF-VERIFICATION (concise checklist; no chain-of-thought)
+  - Halt and await the literal token: PROCEED.
+  - Make the smallest safe assumption if required and record it under SELF-VERIFICATION → Assumptions.
+  - Do not ask clarifying questions.
+
+  Stateless restart protocol:
+  - Treat every run as stateless. Do not rely on prior messages.
+  - Accept one of these control blocks at any time and act accordingly:
+    • CLEAR CONTEXT → start from Stage 0 (Preflight).
+    • RESUME CONTEXT → jump to the specified next stage(s).
+    • JUMP TO STAGE → re-run the specified stage with given constraints.
+  - Always restate “Last completed stage” and “Next stage(s)” in SELF-VERIFICATION.
+
+user: |
+  OBJECTIVE
+  Build a multi-issue “Field Guide Zine” with 3–5 issues. Each issue has a Cover Page, Introduction, Table of Contents, and expandable Sections/Entries. Provide a context-aware chat (Claude 4.1 Opus) using Vercel AI SDK v5 + Vercel AI Elements, grounded by packIssueContext.
+
+  DATA MODEL (repo-local JSON)
+  - /data/issues.json
+  {
+    "issues": [
+      {
+        "slug": "issue-01",
+        "meta": { "title": "Issue #1: …", "subtitle": "…", "version": "v2.0", "tagline": "Shacks not Cathedrals" },
+        "intro": "Short introduction.",
+        "sections": [
+          {
+            "id": "section-id",
+            "title": "Section Title",
+            "icon": "circle|square|triangle|zap|battery",
+            "color": "cyan|purple|green|yellow",
+            "entries": [
+              { "pattern": "Pattern Name", "description": "Brief explanation", "signals": ["A","B","C"], "protocol": "Action…" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+
+  ROUTES
+    /                → Zine index: grid of issue covers
+    /zine/[slug]     → Issue reader: Cover, Intro, TOC, Sections/Entries + slide-over Chat
+
+  CORE COMPONENTS
+    LayoutShell (breadcrumb, progress, theme)
+    ZineCover, IssueIntro, TableOfContents, IssueNavigator
+    FieldGuideSection, ExpandablePattern, SignalsList, ProtocolDisplay
+    ChatPanel (AI Elements inside shadcn Sheet)
+
+  CHAT INTEGRATION (v5-correct)
+    Model alias: const MODEL_ID = "claude-4.1-opus"
+    Client:
+      - useChat from "@ai-sdk/react"
+      - Transport: new DefaultChatTransport({ api: "/api/chat", body: () => ({ issueContext, modelId: MODEL_ID }) })
+      - Messages are UIMessage[] with parts[], not { role, content }.
+      - Manage local draft string; call sendMessage({ role: "user", parts: [{ type: "text", text }] }).
+      - Persist/restore full UIMessage[] in localStorage under key chat:issue:${slug}.
+    Server (app/api/chat/route.ts):
+      - Accept UIMessage[] as payload.messages.
+      - Convert with convertToCoreMessages(messages) before streamText.
+      - return result.toAIStreamResponse().
+      - Include header "x-issue-slug": issueContext.slug.
+      - temperature ≤ 0.5, maxTokens ≤ 800.
+
+  GROUNDING (packIssueContext)
+    • Soft cap ~12k characters.
+    • Deterministic ordering: sections by title; entries by pattern.
+    • Keep per entry: pattern, up to 3 signals, protocol trimmed ≤ 280 chars.
+    • PackedIssueContext = { slug, meta {title,subtitle,version,tagline}, toc [{id,title}], entries[], charCount }.
+    • If over budget, degrade to meta + TOC + first N entries (deterministic).
+
+  AI ELEMENTS (install from Stage 0)
+    - CLI generates components into the repo (not node_modules):
+      pnpm dlx ai-elements@latest add conversation message response prompt-input typing actions suggestion loader open-in-chat
+    - Use Elements inside the shadcn Sheet. Keep streaming, abort/stop, retry/regenerate.
+    - Show a minimal “Checks” footer on assistant replies listing referenced pattern names.
+
+  A11Y & UX
+    • Focus trap in Sheet; aria-labelledby and aria-description.
+    • ESC/Close restores focus to the toggle button.
+    • Keyboard navigation, visible focus, tap targets ≥ 44px, reduced motion friendly.
+    • Mobile-first: single column primary reading; sticky chat toggle.
+
+  STAGES (MULTI-STEP; HALT AFTER EACH UNTIL “PROCEED”)
+
+  STAGE 0 — PREFLIGHT (stateless guardrails)
+    Checks:
+      - Node ≥ 18; Next 15 present; pnpm available.
+      - ANTHROPIC_API_KEY present.
+      - AI Elements components exist under components/ai-elements/**; if missing, print exact pnpm dlx commands and HALT.
+      - Fail if ChatPanel imports any legacy custom chat components.
+    Output: versions summary; Elements paths; decision to proceed or install instructions.
+
+  STAGE 1 — SCAFFOLDING & CONTENT
+    - Tailwind + shadcn configured.
+    - /data/issues.json with 3–5 issues (transform existing single guide into multiple).
+    - app/layout.tsx, app/page.tsx, app/zine/[slug]/page.tsx
+    - lib/packIssueContext.ts, lib/buildSystemPrompt.ts (deterministic, budgeted).
+
+  STAGE 2 — CORE UI
+    - ZineCover, IssueIntro, TableOfContents, FieldGuideSection, ExpandablePattern, SignalsList, ProtocolDisplay, IssueNavigator.
+    - Deterministic anchors; keyboard-accessible expand/collapse.
+
+  STAGE 3 — LAYOUT & NAV
+    - LayoutShell with Breadcrumb, progress bar, sticky chat toggle.
+    - Responsive index grid; reader layout on issue.
+
+  STAGE 4 — CHAT (AI SDK v5 + AI Elements)
+    Server:
+      - streamText(anthropic(MODEL_ID)); convertToCoreMessages(payload.messages); toAIStreamResponse().
+    Client:
+      - useChat({ id: issue.slug, transport: DefaultChatTransport({ api: "/api/chat", body: () => ({ issueContext, modelId: MODEL_ID }) }) })
+      - Seed kickoff UIMessage with parts[] per issue.
+      - Persist UIMessage[] to localStorage; reset on slug change.
+      - Render Elements: Conversation, Message/Response, PromptInputTextarea, Actions (Stop/Retry), Typing/Suggestions, minimal Checks footer.
+    ESLint note:
+      - If Elements warns about children deps, wrap childrenArray in useMemo([children]).
+
+  STAGE 5 — POLISH, A11Y, PERF
+    - Visual pass: zine headers, mono accents, spacing, dark theme.
+    - A11y checks, CLS/LCP sanity, remove unused code.
+
+  AUDIT (run before patching in Stage 4; print findings)
+    - grep -RIn "handleInputChange\\|setInput\\|\\binput\\b" components
+    - grep -RIn "content\":[ ]*\"" components app
+    - grep -RIn "toUIMessageStreamResponse" app/api/chat
+    - grep -RIn "sendMessage({ text" components
+    - Verify components/ai-elements/** exists
+    - grep -RIn "from .*/ai-elements/" components
+
+  OUTPUT FORMAT (EACH STAGE)
+    1) PLAN
+    2) FILES ADDED/CHANGED
+    3) CODE
+    4) SELF-VERIFICATION
+
+  SUCCESS CRITERIA (FINAL)
+    ✓ Navigate to index; open any issue; read Cover/Intro/TOC/Sections
+    ✓ Expand entries; signals/protocol readable
+    ✓ Open chat; responses grounded to current issue
+    ✓ Switch issues; chat grounding updates automatically
+    ✓ Per-issue sessions persist; kickoff resets on slug change
+    ✓ Initial load < 3s on a standard laptop
+    ✓ A11y validated (roles, labels, keyboard order, focus restore)
+
+# --- Stateless control blocks you may paste to re-anchor a run ---
+
+# CLEAR CONTEXT
+# Start from Stage 0 with all guardrails. If AI Elements missing, print install commands and HALT.
+# Proceed only after I reply: PROCEED
+
+# RESUME CONTEXT
+# Last completed stage: <e.g., 4.1-api>
+# Next stage(s): <e.g., 4.2–4.3-elements>
+# Ground rules unchanged (stage gate, output contract, no questions). Execute next stage(s) and HALT.
+
+# JUMP TO STAGE
+# Target: <e.g., 4.2–4.3>
+# Constraints: do not modify unrelated files; if AI Elements paths missing, print install commands and HALT; preserve context packing/system prompt/sessioning.
