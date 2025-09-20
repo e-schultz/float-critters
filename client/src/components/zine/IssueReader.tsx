@@ -141,6 +141,7 @@ export function IssueReader({ issue }: IssueReaderProps) {
               section={section}
               isExpanded={expandedSections.has(section.id)}
               onToggle={() => toggleSection(section.id)}
+              issueSlug={issue.slug}
             />
           ))}
         </section>

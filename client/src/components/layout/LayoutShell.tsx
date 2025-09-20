@@ -1,9 +1,11 @@
 import { ReactNode, useState } from "react";
 import { Link } from "wouter";
-import { ChevronRight, Sun, Moon, Search, MessageCircle } from "lucide-react";
+import { ChevronRight, Sun, Moon, Search, MessageCircle, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { ChatPanel } from "@/components/zine/ChatPanel";
+import { SearchModal } from "@/components/search/SearchModal";
+import { BookmarksPanel } from "@/components/bookmarks/BookmarksPanel";
 
 interface BreadcrumbItem {
   label: string;
@@ -19,6 +21,8 @@ interface LayoutShellProps {
 export function LayoutShell({ children, breadcrumb = [], progress }: LayoutShellProps) {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
 
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
@@ -74,10 +78,20 @@ export function LayoutShell({ children, breadcrumb = [], progress }: LayoutShell
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => setIsSearchOpen(true)}
                 aria-label="Search"
                 data-testid="search-button"
               >
                 <Search className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsBookmarksOpen(true)}
+                aria-label="Bookmarks"
+                data-testid="bookmarks-button"
+              >
+                <Bookmark className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -109,6 +123,12 @@ export function LayoutShell({ children, breadcrumb = [], progress }: LayoutShell
 
       {/* Chat Panel */}
       <ChatPanel isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      
+      {/* Search Modal */}
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      
+      {/* Bookmarks Panel */}
+      <BookmarksPanel isOpen={isBookmarksOpen} onClose={() => setIsBookmarksOpen(false)} />
     </div>
   );
 }

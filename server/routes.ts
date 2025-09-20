@@ -1,6 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { searchService } from "./searchService";
+import { db } from "./db";
+import { bookmarks, searchIndex } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 
 /*
 <important_code_snippet_instructions>
@@ -106,6 +110,250 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.write('data: [DONE]\n\n');
         res.end();
       }
+    }
+  });
+
+  // Search API endpoints
+  app.post('/api/search', async (req, res) => {
+    try {
+      const { query, issueSlug, contentType, limit } = req.body;
+      
+      if (!query || typeof query !== 'string' || query.trim().length === 0) {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+
+      const results = await searchService.search({
+        query: query.trim(),
+        issueSlug,
+        contentType,
+        limit: limit || 20
+      });
+
+      res.json({ results, totalCount: results.length });
+    } catch (error: any) {
+      console.error('Search API error:', error);
+      res.status(500).json({ 
+        error: 'Search failed',
+        details: error.message 
+      });
+    }
+  });
+
+  app.get('/api/search/suggestions', async (req, res) => {
+    try {
+      const { q } = req.query;
+      
+      if (!q || typeof q !== 'string') {
+        return res.json({ suggestions: [] });
+      }
+
+      const suggestions = await searchService.getSuggestions(q);
+      res.json({ suggestions });
+    } catch (error: any) {
+      console.error('Search suggestions API error:', error);
+      res.status(500).json({ 
+        error: 'Failed to get suggestions',
+        details: error.message 
+      });
+    }
+  });
+
+  app.post('/api/search/initialize', async (req, res) => {
+    try {
+      await searchService.initializeSearchIndex();
+      res.json({ message: 'Search index initialized successfully' });
+    } catch (error: any) {
+      console.error('Search initialization error:', error);
+      res.status(500).json({ 
+        error: 'Failed to initialize search index',
+        details: error.message 
+      });
+    }
+  });
+
+  // Bookmark API endpoints
+  app.get('/api/bookmarks', async (req, res) => {
+    try {
+      // For now, use a default user (in real app, get from session)
+      const userId = 'demo-user';
+      
+      const userBookmarks = await db
+        .select()
+        .from(bookmarks)
+        .where(eq(bookmarks.userId, userId))
+        .orderBy(bookmarks.createdAt);
+
+      // Enrich bookmarks with metadata from search index
+      const enrichedBookmarks = await Promise.all(
+        userBookmarks.map(async (bookmark) => {
+          const metadata: any = {};
+          
+          // Get issue/section metadata from search index
+          const indexResults = await db
+            .select()
+            .from(searchIndex)
+            .where(
+              and(
+                eq(searchIndex.issueSlug, bookmark.issueSlug),
+                eq(searchIndex.contentType, 'issue')
+              )
+            )
+            .limit(1);
+            
+          if (indexResults.length > 0) {
+            const meta = indexResults[0].metadata as any;
+            metadata.issueTitle = meta?.title || indexResults[0].patternName;
+          }
+          
+          if (bookmark.sectionId) {
+            const sectionResults = await db
+              .select()
+              .from(searchIndex)
+              .where(
+                and(
+                  eq(searchIndex.issueSlug, bookmark.issueSlug),
+                  eq(searchIndex.sectionId, bookmark.sectionId),
+                  eq(searchIndex.contentType, 'section')
+                )
+              )
+              .limit(1);
+              
+            if (sectionResults.length > 0) {
+              metadata.sectionTitle = sectionResults[0].patternName;
+              const sectionMeta = sectionResults[0].metadata as any;
+              metadata.sectionColor = sectionMeta?.color;
+            }
+          }
+          
+          return {
+            ...bookmark,
+            metadata
+          };
+        })
+      );
+
+      res.json({ bookmarks: enrichedBookmarks });
+    } catch (error: any) {
+      console.error('Bookmarks fetch error:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch bookmarks',
+        details: error.message 
+      });
+    }
+  });
+
+  app.post('/api/bookmarks', async (req, res) => {
+    try {
+      const { issueSlug, sectionId, patternName, bookmarkType, notes } = req.body;
+      
+      if (!issueSlug || !bookmarkType) {
+        return res.status(400).json({ error: 'Issue slug and bookmark type are required' });
+      }
+
+      // For now, use a default user (in real app, get from session)
+      const userId = 'demo-user';
+      
+      // Check if bookmark already exists
+      const existing = await db
+        .select()
+        .from(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, userId),
+            eq(bookmarks.issueSlug, issueSlug),
+            eq(bookmarks.bookmarkType, bookmarkType),
+            sectionId ? eq(bookmarks.sectionId, sectionId) : eq(bookmarks.sectionId, ''),
+            patternName ? eq(bookmarks.patternName, patternName) : eq(bookmarks.patternName, '')
+          )
+        );
+
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'Bookmark already exists' });
+      }
+
+      const [newBookmark] = await db
+        .insert(bookmarks)
+        .values({
+          userId,
+          issueSlug,
+          sectionId: sectionId || null,
+          patternName: patternName || null,
+          bookmarkType,
+          notes: notes || null,
+        })
+        .returning();
+
+      res.json({ bookmark: newBookmark });
+    } catch (error: any) {
+      console.error('Bookmark creation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to create bookmark',
+        details: error.message 
+      });
+    }
+  });
+
+  app.delete('/api/bookmarks', async (req, res) => {
+    try {
+      const { issueSlug, sectionId, patternName, bookmarkType } = req.query;
+      
+      if (!issueSlug || !bookmarkType) {
+        return res.status(400).json({ error: 'Issue slug and bookmark type are required' });
+      }
+
+      // For now, use a default user (in real app, get from session)
+      const userId = 'demo-user';
+      
+      const result = await db
+        .delete(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, userId),
+            eq(bookmarks.issueSlug, issueSlug as string),
+            eq(bookmarks.bookmarkType, bookmarkType as string),
+            sectionId ? eq(bookmarks.sectionId, sectionId as string) : eq(bookmarks.sectionId, ''),
+            patternName ? eq(bookmarks.patternName, patternName as string) : eq(bookmarks.patternName, '')
+          )
+        );
+
+      res.json({ message: 'Bookmark removed successfully' });
+    } catch (error: any) {
+      console.error('Bookmark deletion error:', error);
+      res.status(500).json({ 
+        error: 'Failed to remove bookmark',
+        details: error.message 
+      });
+    }
+  });
+
+  app.get('/api/bookmarks/check', async (req, res) => {
+    try {
+      const { issueSlug, sectionId, patternName, bookmarkType } = req.query;
+      
+      if (!issueSlug || !bookmarkType) {
+        return res.json({ isBookmarked: false });
+      }
+
+      // For now, use a default user (in real app, get from session)
+      const userId = 'demo-user';
+      
+      const existing = await db
+        .select()
+        .from(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, userId),
+            eq(bookmarks.issueSlug, issueSlug as string),
+            eq(bookmarks.bookmarkType, bookmarkType as string),
+            sectionId ? eq(bookmarks.sectionId, sectionId as string) : eq(bookmarks.sectionId, ''),
+            patternName ? eq(bookmarks.patternName, patternName as string) : eq(bookmarks.patternName, '')
+          )
+        );
+
+      res.json({ isBookmarked: existing.length > 0 });
+    } catch (error: any) {
+      console.error('Bookmark check error:', error);
+      res.json({ isBookmarked: false });
     }
   });
 

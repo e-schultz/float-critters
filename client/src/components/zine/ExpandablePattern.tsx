@@ -1,4 +1,5 @@
 import { ChevronDown, Radio, PlayCircle } from "lucide-react";
+import { BookmarkButton } from "@/components/bookmarks/BookmarkButton";
 
 interface PatternEntry {
   pattern: string;
@@ -12,9 +13,11 @@ interface ExpandablePatternProps {
   color: string;
   isExpanded: boolean;
   onToggle: () => void;
+  issueSlug?: string;
+  sectionId?: string;
 }
 
-export function ExpandablePattern({ entry, color, isExpanded, onToggle }: ExpandablePatternProps) {
+export function ExpandablePattern({ entry, color, isExpanded, onToggle, issueSlug, sectionId }: ExpandablePatternProps) {
   const colorClasses = {
     cyan: "bg-section-cyan/20 text-section-cyan",
     purple: "bg-section-purple/20 text-section-purple", 
@@ -35,15 +38,26 @@ export function ExpandablePattern({ entry, color, isExpanded, onToggle }: Expand
         aria-expanded={isExpanded}
         data-testid={`pattern-toggle-${entry.pattern.toLowerCase().replace(/\s+/g, '-')}`}
       >
-        <div>
+        <div className="flex-1">
           <h3 className="font-semibold">{entry.pattern}</h3>
           <p className="text-sm text-muted-foreground">{entry.description}</p>
         </div>
-        <ChevronDown 
-          className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
-            isExpanded ? 'rotate-180' : ''
-          }`} 
-        />
+        <div className="flex items-center space-x-2">
+          {issueSlug && sectionId && (
+            <BookmarkButton
+              issueSlug={issueSlug}
+              sectionId={sectionId}
+              patternName={entry.pattern}
+              bookmarkType="pattern"
+              className="w-8 h-8"
+            />
+          )}
+          <ChevronDown 
+            className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
+              isExpanded ? 'rotate-180' : ''
+            }`} 
+          />
+        </div>
       </button>
       
       {isExpanded && (

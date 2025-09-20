@@ -20,9 +20,10 @@ interface FieldGuideSectionProps {
   section: Section;
   isExpanded: boolean;
   onToggle: () => void;
+  issueSlug?: string;
 }
 
-export function FieldGuideSection({ section, isExpanded, onToggle }: FieldGuideSectionProps) {
+export function FieldGuideSection({ section, isExpanded, onToggle, issueSlug }: FieldGuideSectionProps) {
   const [expandedPatterns, setExpandedPatterns] = useState<Set<string>>(new Set());
 
   const togglePattern = (patternId: string) => {
@@ -67,6 +68,8 @@ export function FieldGuideSection({ section, isExpanded, onToggle }: FieldGuideS
               color={section.color}
               isExpanded={expandedPatterns.has(patternId)}
               onToggle={() => togglePattern(patternId)}
+              issueSlug={issueSlug}
+              sectionId={section.id}
               data-testid={`pattern-${patternId}`}
             />
           );
