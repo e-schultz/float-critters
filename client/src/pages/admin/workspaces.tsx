@@ -90,7 +90,6 @@ export default function AdminWorkspaces() {
 
   const createWorkspaceMutation = useMutation({
     mutationFn: async (data: CreateWorkspaceFormData) => {
-      const token = localStorage.getItem('admin-token');
       const response = await apiRequest('POST', '/api/admin/workspaces', {
         title: data.title,
         goal: data.goal
