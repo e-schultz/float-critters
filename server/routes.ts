@@ -552,6 +552,31 @@ Transform the following content:`;
     }
   });
 
+  // Public issues endpoint (for frontend)
+  app.get('/api/issues', async (req, res) => {
+    try {
+      const dbIssues = await storage.getIssues();
+      
+      // Transform database structure to frontend expected structure
+      const issues = dbIssues.map(issue => ({
+        slug: issue.slug,
+        meta: {
+          title: issue.title,
+          subtitle: issue.subtitle,
+          version: issue.version,
+          tagline: issue.tagline
+        },
+        intro: issue.intro,
+        sections: issue.sections
+      }));
+      
+      res.json({ issues });
+    } catch (error: any) {
+      console.error('Get public issues error:', error);
+      res.status(500).json({ error: 'Failed to fetch issues' });
+    }
+  });
+
   // Issues management endpoints
   app.get('/api/admin/issues', requireAdminAuth, async (req: any, res) => {
     try {

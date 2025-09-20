@@ -35,7 +35,7 @@ export default function IssuePage() {
   const slug = params?.slug;
 
   const { data: issuesData, isLoading, error } = useQuery<IssuesData>({
-    queryKey: ["/data/issues.json"],
+    queryKey: ["/api/issues"],
     enabled: !!slug,
   });
 
@@ -74,7 +74,7 @@ export default function IssuePage() {
 
   const issue = issuesData?.issues.find((i) => i.slug === slug);
 
-  if (!issue) {
+  if (!issue || !issue.meta) {
     return (
       <LayoutShell>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

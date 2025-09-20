@@ -24,7 +24,7 @@ interface IssuesData {
 
 export default function IndexPage() {
   const { data: issuesData, isLoading, error } = useQuery<IssuesData>({
-    queryKey: ["/data/issues.json"],
+    queryKey: ["/api/issues"],
   });
 
   if (isLoading) {

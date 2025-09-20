@@ -39,6 +39,11 @@ const issueImages = [
 const issueIcons = [Layers, Network, Database, Shield, TrendingUp];
 
 export function ZineCover({ issue }: ZineCoverProps) {
+  // Defensive check for undefined issue or meta
+  if (!issue || !issue.meta) {
+    return null;
+  }
+
   const issueIndex = parseInt(issue.slug.split('-')[1]) - 1;
   const gradient = issueGradients[issueIndex] || issueGradients[0];
   const image = issueImages[issueIndex] || issueImages[0];

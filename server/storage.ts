@@ -611,12 +611,14 @@ export class MemStorage implements IStorage {
     // Create activity record
     await this.createActivity({
       workspaceId,
-      userId: workspace.userId,
       type: 'publish',
-      description: `Published draft as Issue "${issue.title}" (${issue.slug})`,
-      metadata: {
-        issueSlug: issue.slug,
-        publishedAt: issue.publishedAt
+      payload: {
+        userId: workspace.userId,
+        description: `Published draft as Issue "${issue.title}" (${issue.slug})`,
+        metadata: {
+          issueSlug: issue.slug,
+          publishedAt: issue.publishedAt
+        }
       }
     });
 
@@ -977,12 +979,14 @@ export class DbStorage implements IStorage {
     // Create activity record
     await this.createActivity({
       workspaceId,
-      userId: workspace.userId,
       type: 'publish',
-      description: `Published draft as Issue "${issue.title}" (${issue.slug})`,
-      metadata: {
-        issueSlug: issue.slug,
-        publishedAt: issue.publishedAt
+      payload: {
+        userId: workspace.userId,
+        description: `Published draft as Issue "${issue.title}" (${issue.slug})`,
+        metadata: {
+          issueSlug: issue.slug,
+          publishedAt: issue.publishedAt
+        }
       }
     });
 

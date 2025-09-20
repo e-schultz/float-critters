@@ -23,7 +23,7 @@ const MAX_CONTEXT_CHARS = 12000;
 export async function packIssueContext(issueSlug: string): Promise<PackedIssueContext> {
   try {
     // Fetch issues data
-    const response = await fetch('/data/issues.json');
+    const response = await fetch('/api/issues');
     if (!response.ok) {
       throw new Error('Failed to fetch issues data');
     }
