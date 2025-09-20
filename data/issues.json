@@ -1,0 +1,264 @@
+{
+  "issues": [
+    {
+      "slug": "issue-01",
+      "meta": {
+        "title": "Foundation Patterns",
+        "subtitle": "Building Blocks for Resilient Systems",
+        "version": "v2.0",
+        "tagline": "Shacks not Cathedrals"
+      },
+      "intro": "In the rapidly evolving landscape of system design, the temptation to build complex, cathedral-like architectures is ever-present. However, experience teaches us that resilience often comes from simplicity, modularity, and the ability to adapt quickly to changing requirements. This collection of foundation patterns focuses on the essential building blocks that enable teams to construct robust systems without falling into the trap of over-engineering.",
+      "sections": [
+        {
+          "id": "core-abstractions",
+          "title": "Core Abstractions",
+          "icon": "circle",
+          "color": "cyan",
+          "entries": [
+            {
+              "pattern": "Interface Segregation",
+              "description": "Split large interfaces into smaller, focused contracts",
+              "signals": ["Large interface files", "Unused method implementations", "Test complexity growth"],
+              "protocol": "1. Identify cohesive method groups 2. Extract focused interfaces 3. Compose larger contracts from smaller ones 4. Validate through dependency injection"
+            },
+            {
+              "pattern": "Fail-Fast Validation",
+              "description": "Detect and reject invalid inputs at system boundaries",
+              "signals": ["Late error discovery", "Unclear error messages", "Resource waste on invalid data"],
+              "protocol": "1. Define validation schemas at boundaries 2. Return structured error responses 3. Log validation failures for monitoring 4. Document expected input formats"
+            },
+            {
+              "pattern": "Command Query Separation",
+              "description": "Separate methods that change state from those that return data",
+              "signals": ["Unclear side effects", "Difficult debugging", "Caching complexity"],
+              "protocol": "1. Queries return data without side effects 2. Commands modify state without returning data 3. Use naming conventions to clarify intent 4. Consider CQRS for complex domains"
+            }
+          ]
+        },
+        {
+          "id": "modular-design",
+          "title": "Modular Design",
+          "icon": "square",
+          "color": "purple",
+          "entries": [
+            {
+              "pattern": "Plugin Architecture",
+              "description": "Enable system extension through well-defined plugin interfaces",
+              "signals": ["Monolithic feature additions", "Difficulty isolating features", "Testing bottlenecks"],
+              "protocol": "1. Define core plugin contracts 2. Implement discovery mechanisms 3. Establish lifecycle management 4. Provide plugin development tools"
+            },
+            {
+              "pattern": "Dependency Injection",
+              "description": "Invert control of dependency creation and management",
+              "signals": ["Hard-coded dependencies", "Difficult testing", "Tight coupling"],
+              "protocol": "1. Define service contracts 2. Configure dependency container 3. Inject dependencies at boundaries 4. Validate dependency graphs"
+            }
+          ]
+        },
+        {
+          "id": "error-handling",
+          "title": "Error Handling",
+          "icon": "triangle",
+          "color": "green",
+          "entries": [
+            {
+              "pattern": "Circuit Breaker",
+              "description": "Prevent cascading failures by monitoring and isolating failing services",
+              "signals": ["Cascading service failures", "Long timeout delays", "Resource exhaustion"],
+              "protocol": "1. Monitor service health metrics 2. Define failure thresholds 3. Implement state transitions 4. Provide fallback mechanisms"
+            }
+          ]
+        },
+        {
+          "id": "performance",
+          "title": "Performance Patterns",
+          "icon": "zap",
+          "color": "yellow",
+          "entries": [
+            {
+              "pattern": "Lazy Loading",
+              "description": "Defer resource loading until actually needed",
+              "signals": ["Slow initial load times", "Memory pressure", "Unused resource allocation"],
+              "protocol": "1. Identify loading boundaries 2. Implement loading triggers 3. Cache loaded resources 4. Handle loading states gracefully"
+            }
+          ]
+        },
+        {
+          "id": "observability",
+          "title": "Observability",
+          "icon": "battery",
+          "color": "cyan",
+          "entries": [
+            {
+              "pattern": "Structured Logging",
+              "description": "Emit consistent, queryable log entries with contextual information",
+              "signals": ["Inconsistent log formats", "Difficult troubleshooting", "Poor log searchability"],
+              "protocol": "1. Define standard log schema 2. Include correlation identifiers 3. Structure context data 4. Implement log level policies"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "issue-02",
+      "meta": {
+        "title": "Network Dynamics",
+        "subtitle": "Protocols for Distributed Coordination",
+        "version": "v1.8",
+        "tagline": "Connection over Perfection"
+      },
+      "intro": "Distributed systems present unique challenges that require specialized patterns and protocols. This issue explores advanced techniques for managing network interactions, coordinating between services, and maintaining consistency across distributed components.",
+      "sections": [
+        {
+          "id": "consensus",
+          "title": "Consensus Patterns",
+          "icon": "circle",
+          "color": "cyan",
+          "entries": [
+            {
+              "pattern": "Raft Consensus",
+              "description": "Achieve distributed consensus through leader election and log replication",
+              "signals": ["Split-brain scenarios", "Inconsistent state", "Network partition issues"],
+              "protocol": "1. Elect leader node 2. Replicate log entries 3. Commit when majority agrees 4. Handle leader failures gracefully"
+            }
+          ]
+        },
+        {
+          "id": "coordination",
+          "title": "Service Coordination",
+          "icon": "square",
+          "color": "purple",
+          "entries": [
+            {
+              "pattern": "Saga Pattern",
+              "description": "Manage distributed transactions through compensating actions",
+              "signals": ["Complex transaction rollbacks", "Partial failure states", "Inconsistent business state"],
+              "protocol": "1. Define transaction steps 2. Implement compensating actions 3. Orchestrate or choreograph execution 4. Handle partial failures"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "issue-03",
+      "meta": {
+        "title": "Data Orchestration",
+        "subtitle": "Patterns for Information Flow",
+        "version": "v2.1",
+        "tagline": "Flow over Storage"
+      },
+      "intro": "Modern applications are data-driven, requiring sophisticated approaches to data pipeline design, transformation, and real-time processing. This comprehensive guide covers essential patterns for managing information flow across complex systems.",
+      "sections": [
+        {
+          "id": "pipelines",
+          "title": "Data Pipelines",
+          "icon": "circle",
+          "color": "green",
+          "entries": [
+            {
+              "pattern": "ETL Pipeline",
+              "description": "Extract, transform, and load data through structured processing stages",
+              "signals": ["Data quality issues", "Processing bottlenecks", "Transformation complexity"],
+              "protocol": "1. Define extraction sources 2. Implement transformation logic 3. Validate data quality 4. Load to target systems"
+            }
+          ]
+        },
+        {
+          "id": "streaming",
+          "title": "Stream Processing",
+          "icon": "triangle",
+          "color": "yellow",
+          "entries": [
+            {
+              "pattern": "Event Sourcing",
+              "description": "Store state changes as immutable events for audit and replay capabilities",
+              "signals": ["Complex state reconstruction", "Audit requirements", "Temporal queries"],
+              "protocol": "1. Model domain events 2. Append to event store 3. Build projections 4. Handle event versioning"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "issue-04",
+      "meta": {
+        "title": "Security Protocols",
+        "subtitle": "Trust & Verification Patterns",
+        "version": "v1.5",
+        "tagline": "Trust but Verify"
+      },
+      "intro": "Security is not an afterthought but a fundamental aspect of system design. This issue covers essential security patterns covering authentication, authorization, encryption, and threat mitigation strategies for building secure, trustworthy systems.",
+      "sections": [
+        {
+          "id": "authentication",
+          "title": "Authentication",
+          "icon": "shield",
+          "color": "purple",
+          "entries": [
+            {
+              "pattern": "OAuth 2.0 Flow",
+              "description": "Secure authorization through standardized token-based flows",
+              "signals": ["Credential exposure", "Session management complexity", "Third-party integration needs"],
+              "protocol": "1. Redirect to authorization server 2. Obtain authorization code 3. Exchange for access token 4. Use token for API access"
+            }
+          ]
+        },
+        {
+          "id": "encryption",
+          "title": "Encryption",
+          "icon": "square",
+          "color": "cyan",
+          "entries": [
+            {
+              "pattern": "Envelope Encryption",
+              "description": "Encrypt data with data keys, then encrypt data keys with master keys",
+              "signals": ["Key management complexity", "Performance overhead", "Compliance requirements"],
+              "protocol": "1. Generate data encryption key 2. Encrypt data with DEK 3. Encrypt DEK with master key 4. Store encrypted DEK with data"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "issue-05",
+      "meta": {
+        "title": "Scale & Growth",
+        "subtitle": "Patterns for System Evolution",
+        "version": "v1.2",
+        "tagline": "Evolve not Revolve"
+      },
+      "intro": "Successful systems must grow and adapt over time. This issue explores strategic patterns for scaling systems, managing technical debt, and evolving architecture while maintaining reliability and performance.",
+      "sections": [
+        {
+          "id": "scaling",
+          "title": "Horizontal Scaling",
+          "icon": "trending-up",
+          "color": "yellow",
+          "entries": [
+            {
+              "pattern": "Load Balancing",
+              "description": "Distribute requests across multiple service instances",
+              "signals": ["Single point of bottleneck", "Uneven resource utilization", "Capacity limitations"],
+              "protocol": "1. Deploy multiple instances 2. Configure load balancer 3. Implement health checks 4. Monitor distribution metrics"
+            }
+          ]
+        },
+        {
+          "id": "evolution",
+          "title": "Architecture Evolution",
+          "icon": "zap",
+          "color": "green",
+          "entries": [
+            {
+              "pattern": "Strangler Fig",
+              "description": "Gradually replace legacy systems by routing traffic to new implementations",
+              "signals": ["Legacy system limitations", "Migration risks", "Continuous delivery needs"],
+              "protocol": "1. Identify migration boundaries 2. Build new functionality 3. Route traffic incrementally 4. Deprecate old components"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
