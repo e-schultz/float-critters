@@ -12,7 +12,8 @@ import {
   LogOut, 
   User,
   Menu,
-  X
+  X,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,11 @@ const navigation = [
     name: "Dashboard",
     href: "/admin",
     icon: LayoutDashboard
+  },
+  {
+    name: "Workspaces",
+    href: "/admin/workspaces",
+    icon: Users
   },
   {
     name: "Import Content",
