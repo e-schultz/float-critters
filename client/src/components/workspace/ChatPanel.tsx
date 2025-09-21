@@ -4,13 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
@@ -20,11 +13,20 @@ import {
   User, 
   Bot,
   Loader2,
-  Square
+  Square,
+  RefreshCw
 } from "lucide-react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
+import { queryClient } from "@/lib/queryClient";
 
 interface ChatPanelProps {
   workspaceId: string;
@@ -32,9 +34,9 @@ interface ChatPanelProps {
 
 export function ChatPanel({ workspaceId }: ChatPanelProps) {
   const { toast } = useToast();
-  const [selectedScope, setSelectedScope] = useState("whole");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasHydratedRef = useRef(false);
+  const [selectedScope, setSelectedScope] = useState("whole");
 
   // Fetch draft for context-aware prompts
   const { data: draftData } = useQuery({
@@ -42,9 +44,7 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
     queryFn: async () => {
       const token = localStorage.getItem('admin-token');
       const response = await fetch(`/api/admin/workspaces/${workspaceId}/draft`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) return null;
       return response.json();
@@ -57,9 +57,7 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
     queryFn: async () => {
       const token = localStorage.getItem('admin-token');
       const response = await fetch(`/api/admin/workspaces/${workspaceId}/messages`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Failed to fetch messages');
       return response.json();
@@ -73,7 +71,7 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
     content: msg.content
   })) || [];
 
-  // Use the built-in useChat hook from Vercel AI SDK
+  // Modern AI SDK chat hook with persisted history
   const {
     messages,
     input,
@@ -82,25 +80,32 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
     isLoading,
     stop,
     error,
+    reload,
     setMessages
   } = useChat({
-    api: `/api/admin/workspaces/${workspaceId}/chat-ai`,
+    api: `/api/workspace/${workspaceId}/chat`,
+    body: {
+      sectionPath: selectedScope !== 'whole' ? selectedScope : undefined
+    },
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('admin-token')}`
     },
-    body: {
-      sectionPath: selectedScope !== 'whole' ? selectedScope : null
-    },
     onError: (error) => {
       toast({
-        title: "Message Failed",
-        description: error.message || "Failed to send message to AI assistant.",
+        title: "Chat Error",
+        description: error.message || "Failed to send message",
         variant: "destructive"
+      });
+    },
+    onFinish: () => {
+      // Invalidate messages query after successful completion
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/admin/workspaces', workspaceId, 'messages'] 
       });
     }
   });
 
-  // Rehydrate persisted messages when data loads (one-time only, no active chat)
+  // Rehydrate persisted messages when data loads (one-time only)
   useEffect(() => {
     if (messagesData?.messages && persistedMessages.length > 0 && messages.length === 0 && !hasHydratedRef.current) {
       setMessages(persistedMessages);
@@ -108,13 +113,14 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
     }
   }, [messagesData, setMessages, persistedMessages.length, messages.length]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const draft = draftData?.draft;
   const draftSections = draft?.outline?.sections || [];
+  const isEmptyChat = messages.length === 0;
 
   // Get scope options from draft sections
   const scopeOptions = [
@@ -124,20 +130,6 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
       label: section.title
     }))
   ];
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input?.trim() && !isLoading) {
-      handleSubmit(e);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleFormSubmit(e);
-    }
-  };
 
   return (
     <Card className="h-full flex flex-col" data-testid="chat-panel">
@@ -170,6 +162,17 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
                 Scoped
               </Badge>
             )}
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={reload}
+                disabled={isLoading}
+                data-testid="button-reload"
+              >
+                <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -178,11 +181,16 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
         {/* Messages Area */}
         <ScrollArea className="flex-1 mb-4">
           <div className="space-y-4 pr-4">
-            {messages.length === 0 && (
+            {isEmptyChat && (
               <div className="flex items-center justify-center h-32 text-muted-foreground">
                 <div className="text-center">
                   <Bot className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Start a conversation with your AI assistant</p>
+                  <p className="text-sm">
+                    Ask me about your draft or workspace
+                  </p>
+                  <p className="text-xs mt-1">
+                    I have access to your current draft and can help with content, structure, and ideas
+                  </p>
                 </div>
               </div>
             )}
@@ -232,7 +240,7 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
                 <div className="bg-muted rounded-lg px-3 py-2 text-sm">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    <span className="text-muted-foreground">AI is thinking...</span>
+                    <span className="text-muted-foreground">Thinking...</span>
                   </div>
                 </div>
               </div>
@@ -252,14 +260,13 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
         )}
 
         {/* Input Area */}
-        <form onSubmit={handleFormSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             value={input}
             onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
             placeholder={
               selectedScope === "whole" 
-                ? "Ask about the entire draft..." 
+                ? "Ask about your draft, get ideas, or request changes..." 
                 : `Ask about ${scopeOptions.find(s => s.value === selectedScope)?.label}...`
             }
             disabled={isLoading}
@@ -281,20 +288,13 @@ export function ChatPanel({ workspaceId }: ChatPanelProps) {
             <Button
               type="submit"
               size="icon"
-              disabled={!input?.trim() || isLoading}
+              disabled={!input.trim()}
               data-testid="button-send"
             >
               <Send className="h-4 w-4" />
             </Button>
           )}
         </form>
-
-        {/* Context Info */}
-        {selectedScope !== "whole" && (
-          <div className="mt-2 text-xs text-muted-foreground">
-            💡 Focused on: {scopeOptions.find(s => s.value === selectedScope)?.label}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
