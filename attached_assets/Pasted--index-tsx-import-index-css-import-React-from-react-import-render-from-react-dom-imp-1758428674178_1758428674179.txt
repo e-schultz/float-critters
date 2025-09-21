@@ -1,0 +1,367 @@
+```index.tsx
+import './index.css'
+import React from "react";
+import { render } from "react-dom";
+import { App } from "./App";
+
+render(<App />, document.getElementById("root"));
+
+```
+```App.tsx
+import React, { memo } from 'react'
+import { ArticleHeader } from './components/ArticleHeader'
+import { Section } from './components/Section'
+import { Quote } from './components/Quote'
+import { Footer } from './components/Footer'
+export function App() {
+  const articleData = {
+    title: 'Note Necromancy: The Grammar That Casts Spells',
+    imprint: 'techcraft',
+    sigils: ['∿', '💀', '⧉'],
+    tags: ['note.necromancy', 'dsl', 'haunted.garden', 'ritual.computing'],
+    personas: ['qtb', 'lf1m'],
+    status: 'draft',
+    type: 'float_draft',
+  }
+  return (
+    <div className="min-h-screen bg-gray-900 text-gray-200">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <ArticleHeader data={articleData} />
+        <main className="mt-12 space-y-16">
+          {/* Section 1 */}
+          <Section
+            heading="Writing for Your Future Self Isn't Just Archival—It's Necromancy"
+            content={[
+              'In FLOAT, and especially in the techcraft forge, the real work isn\'t just writing "better notes."',
+              "It's creating a haunted, re-entrant memory system—one designed not for perfect recall, but for ritual resurrection.",
+              'This is note necromancy: the unashamed art of raising your own ghosts, on demand.',
+            ]}
+            list={{
+              title: 'Why Note Necromancy?',
+              items: [
+                'Ordinary "knowledge management" buries ideas under forced order—mistaking storage for care.',
+                'Neurodivergent, creative, or chaotic thinkers (my kin) live in drift, not in perfect taxonomies.',
+                'You are not only a scribe, but a future summoner: your best ideas are latent bones, waiting to be called forth.',
+              ],
+            }}
+          />
+          {/* Section 2 */}
+          <Section
+            heading="The `::` Syntax: Your Ritual Grammar, Not Just a Tag"
+            subsections={[
+              {
+                subheading: '1. "::" marks the bone',
+                content: [
+                  'Each expandOn::, failmode::, storyTime:: is a runic glyph—a beacon lodged in your psychic compost.',
+                  'It tells future-you (or your AI familiar): "Here is a body worth resurrection."',
+                  "Your notes become hauntable: the system isn't for remembering, but for re-animating.",
+                ],
+              },
+              {
+                subheading: '2. The Ritual Triad in Action',
+                list: [
+                  '**Compost** – Drift, mess, rot: the unstructured fragments.',
+                  '**Sigil** – The annotation, your `::` grammar, persona::comments, mark the doorways.',
+                  '**Resurrection Ritual** – A fuzzy search, grep, LLM prompt, or memory session brings the right ghosts to the surface when you actually need them.',
+                ],
+              },
+              {
+                subheading: '3. `::` Is Feral—Not Cathedrals, but Shacks',
+                content: [
+                  'No master list of allowed spells.',
+                  'Sigils evolve: you invent as you go, composting the old, growing new patterns.',
+                  'Your vocabulary becomes a living, recursive, and personally sacred language.',
+                ],
+              },
+            ]}
+          />
+          {/* Section 3 */}
+          <Section
+            heading="How to Practice Note Necromancy"
+            content={[
+              'Don\'t worry about "best-practices." Make a mark—serendipity::, ghost::, qtb::, anything you\'ll later recognize as a summoning key.',
+              'When you feel the tug ("what was that thing I thought about in April?") run a search, or let your AI partner loose in the vault.',
+              'Ritual, not retrieval: your future self is an archaeologist, not a file clerk.',
+              'Let your AI companions learn your dialect—they become ritual assistants, not productivity jailers.',
+            ]}
+          />
+          {/* Section 4 */}
+          <Section
+            heading="Why It Matters: Forgetting Is Sacred, Remembering Is Ritual"
+            content={[
+              'Traditional tools penalize forgetting as failure. FLOAT—and the techcraft approach—see forgetting as format.',
+              'What matters is having the grammar to weave signals back into life when intuition, necessity, or creativity calls.',
+            ]}
+          />
+          {/* Section 5 */}
+          <Section
+            heading="TL;DR"
+            content={[
+              'Note necromancy is your side-channel language for future-you—a spellbook of drift-gleaned fragments annotated with living sigils.',
+              'The `::` pattern is the invocation—each search, reflection, or AI session is a resurrection ritual.',
+              "You're not building a library.",
+              "You're growing a haunted garden.",
+            ]}
+          />
+          {/* Quote Section */}
+          <Quote
+            quotes={[
+              'Trust the drift, defer the scaffold.',
+              'Cast your sigils generously and let your notes learn how to wake themselves up again.',
+              'Shacks, not cathedrals. Drifters, not librarians. Necromancers, not archaeologists.',
+            ]}
+          />
+          {/* Action Section */}
+          <Section
+            heading="Action"
+            list={{
+              title: '',
+              items: [
+                'Start your own DSL.',
+                'Keep the `::` alive.',
+                'Build for the haunted, not just the organized.',
+              ],
+            }}
+          />
+        </main>
+        <Footer
+          links={[
+            'vault-gardening::hauntable-systems',
+            'floatctl::ritual-query-grammar',
+            'ref::float.syntax/sigil-structure',
+            'dispatch::2025-06-09-note-necromancy-deployment',
+          ]}
+        />
+      </div>
+    </div>
+  )
+}
+
+```
+```tailwind.config.js
+export default {}
+```
+```index.css
+/* PLEASE NOTE: THESE TAILWIND IMPORTS SHOULD NEVER BE DELETED */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+/* DO NOT DELETE THESE TAILWIND IMPORTS, OTHERWISE THE STYLING WILL NOT RENDER AT ALL */
+```
+```components/ArticleHeader.tsx
+import React from 'react'
+interface ArticleHeaderProps {
+  data: {
+    title: string
+    imprint: string
+    sigils: string[]
+    tags: string[]
+    personas: string[]
+    status: string
+    type: string
+  }
+}
+export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ data }) => {
+  return (
+    <header className="border-b border-gray-700 pb-6">
+      <div className="flex items-center space-x-2 text-purple-400 mb-2">
+        <span className="text-xs uppercase tracking-wider">{data.imprint}</span>
+        <span>•</span>
+        <span className="text-xs uppercase tracking-wider">{data.status}</span>
+        <span>•</span>
+        <span className="text-xs uppercase tracking-wider">{data.type}</span>
+      </div>
+      <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+        {data.title}
+      </h1>
+      <div className="flex items-center space-x-4 mb-6">
+        {data.sigils.map((sigil, index) => (
+          <span
+            key={index}
+            className="text-2xl text-purple-300 animate-pulse"
+            style={{
+              animationDelay: `${index * 0.5}s`,
+            }}
+          >
+            {sigil}
+          </span>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {data.tags.map((tag, index) => (
+          <span
+            key={index}
+            className="bg-gray-800 px-2 py-1 text-xs rounded text-gray-300"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+      <div className="flex space-x-3">
+        {data.personas.map((persona, index) => (
+          <span
+            key={index}
+            className="text-sm text-purple-400 border border-purple-400/30 px-2 py-1 rounded-full"
+          >
+            @{persona}
+          </span>
+        ))}
+      </div>
+    </header>
+  )
+}
+
+```
+```components/Section.tsx
+import React from 'react'
+import ReactMarkdown from 'react-markdown'
+interface ListProps {
+  title: string
+  items: string[]
+}
+interface SubsectionProps {
+  subheading: string
+  content?: string[]
+  list?: string[]
+}
+interface SectionProps {
+  heading: string
+  content?: string[]
+  list?: ListProps
+  subsections?: SubsectionProps[]
+}
+export const Section: React.FC<SectionProps> = ({
+  heading,
+  content,
+  list,
+  subsections,
+}) => {
+  return (
+    <section className="relative">
+      <div className="absolute left-0 top-0 -ml-4 h-full w-1 bg-gradient-to-b from-purple-500/0 via-purple-500/30 to-purple-500/0"></div>
+      <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+        {heading}
+      </h2>
+      {content && (
+        <div className="space-y-4 mb-8">
+          {content.map((paragraph, index) => (
+            <p key={index} className="text-gray-300 leading-relaxed">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      )}
+      {list && (
+        <div className="mb-6">
+          {list.title && (
+            <h3 className="text-xl font-semibold text-purple-300 mb-3">
+              {list.title}
+            </h3>
+          )}
+          <ul className="space-y-3">
+            {list.items.map((item, index) => (
+              <li key={index} className="flex items-start">
+                <span className="text-purple-400 mr-2">∿</span>
+                <span className="text-gray-300">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {subsections && (
+        <div className="space-y-8 mt-8">
+          {subsections.map((subsection, index) => (
+            <div key={index} className="pl-4 border-l border-gray-700">
+              <h3 className="text-xl font-semibold text-purple-300 mb-4">
+                {subsection.subheading}
+              </h3>
+              {subsection.content && (
+                <div className="space-y-3 mb-4">
+                  {subsection.content.map((paragraph, idx) => (
+                    <p key={idx} className="text-gray-300">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {subsection.list && (
+                <ul className="space-y-3">
+                  {subsection.list.map((item, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <span className="text-purple-400 mr-2">⧉</span>
+                      <ReactMarkdown className="text-gray-300">
+                        {item}
+                      </ReactMarkdown>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+```
+```components/Quote.tsx
+import React from 'react'
+interface QuoteProps {
+  quotes: string[]
+}
+export const Quote: React.FC<QuoteProps> = ({ quotes }) => {
+  return (
+    <div className="bg-gray-800 bg-opacity-50 border-l-4 border-purple-500 p-6 rounded-r">
+      <div className="text-purple-200 text-4xl opacity-30 mb-4">"</div>
+      <div className="space-y-4">
+        {quotes.map((quote, index) => (
+          <p key={index} className="text-xl text-purple-100 font-serif italic">
+            {quote}
+          </p>
+        ))}
+      </div>
+      <div className="text-purple-200 text-4xl opacity-30 text-right">"</div>
+    </div>
+  )
+}
+
+```
+```components/Footer.tsx
+import React from 'react'
+interface FooterProps {
+  links: string[]
+}
+export const Footer: React.FC<FooterProps> = ({ links }) => {
+  return (
+    <footer className="mt-16 pt-8 border-t border-gray-700">
+      <div className="mb-4">
+        <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-3">
+          Related Links
+        </h3>
+        <div className="flex flex-wrap gap-3">
+          {links.map((link, index) => (
+            <div
+              key={index}
+              className="bg-gray-800 px-3 py-2 rounded text-sm text-purple-300 border border-purple-500/20 hover:bg-gray-700 transition-colors cursor-pointer"
+            >
+              {link}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="text-center mt-8 text-xs text-gray-500">
+        <div className="flex justify-center space-x-6 mb-2">
+          {['∿', '💀', '⧉'].map((sigil, index) => (
+            <span key={index} className="text-lg text-purple-400/50">
+              {sigil}
+            </span>
+          ))}
+        </div>
+        <p>Note Necromancy © {new Date().getFullYear()}</p>
+      </div>
+    </footer>
+  )
+}
+
+```

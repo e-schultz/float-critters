@@ -53,6 +53,8 @@ import { ChatPanel } from "@/components/workspace/ChatPanel";
 import { DraftPanel } from "@/components/workspace/DraftPanel";
 import { SuggestionsPanel } from "@/components/workspace/SuggestionsPanel";
 import { ActivityTimeline } from "@/components/workspace/ActivityTimeline";
+import { MobileWorkspaceLayout } from "@/components/workspace/MobileWorkspaceLayout";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import type { Workspace } from "@shared/schema";
 
 // Publish form schema
@@ -473,6 +475,7 @@ function RightPanel({ workspaceId }: { workspaceId: string }) {
 export default function WorkspaceEditor() {
   const params = useParams();
   const workspaceId = params.id;
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const { data: workspaceData, isLoading, error } = useQuery({
     queryKey: ['/api/admin/workspaces', workspaceId],
@@ -618,48 +621,52 @@ export default function WorkspaceEditor() {
             </div>
           </div>
 
-          {/* Three-Panel Workspace Editor */}
+          {/* Responsive Workspace Editor */}
           <div className="h-[calc(100vh-16rem)]" data-testid="workspace-editor">
-            <ResizablePanelGroup direction="horizontal" className="h-full">
-              {/* Left Panel: Chat Interface */}
-              <ResizablePanel 
-                defaultSize={30} 
-                minSize={20} 
-                maxSize={40}
-                className="p-2"
-              >
-                <div className="h-full" data-testid="chat-panel">
-                  <ChatPanel workspaceId={workspaceId!} />
-                </div>
-              </ResizablePanel>
-              
-              <ResizableHandle withHandle />
-              
-              {/* Center Panel: Draft Editor */}
-              <ResizablePanel 
-                defaultSize={45} 
-                minSize={30} 
-                className="p-2"
-              >
-                <div className="h-full" data-testid="draft-panel">
-                  <DraftPanel workspaceId={workspaceId!} />
-                </div>
-              </ResizablePanel>
-              
-              <ResizableHandle withHandle />
-              
-              {/* Right Panel: Suggestions & Activity */}
-              <ResizablePanel 
-                defaultSize={25} 
-                minSize={20} 
-                maxSize={35}
-                className="p-2"
-              >
-                <div className="h-full" data-testid="suggestions-activity-panel">
-                  <RightPanel workspaceId={workspaceId!} />
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+            {isMobile ? (
+              <MobileWorkspaceLayout workspaceId={workspaceId!} />
+            ) : (
+              <ResizablePanelGroup direction="horizontal" className="h-full">
+                {/* Left Panel: Chat Interface */}
+                <ResizablePanel 
+                  defaultSize={30} 
+                  minSize={20} 
+                  maxSize={40}
+                  className="p-2"
+                >
+                  <div className="h-full" data-testid="chat-panel">
+                    <ChatPanel workspaceId={workspaceId!} />
+                  </div>
+                </ResizablePanel>
+                
+                <ResizableHandle withHandle />
+                
+                {/* Center Panel: Draft Editor */}
+                <ResizablePanel 
+                  defaultSize={45} 
+                  minSize={30} 
+                  className="p-2"
+                >
+                  <div className="h-full" data-testid="draft-panel">
+                    <DraftPanel workspaceId={workspaceId!} />
+                  </div>
+                </ResizablePanel>
+                
+                <ResizableHandle withHandle />
+                
+                {/* Right Panel: Suggestions & Activity */}
+                <ResizablePanel 
+                  defaultSize={25} 
+                  minSize={20} 
+                  maxSize={35}
+                  className="p-2"
+                >
+                  <div className="h-full" data-testid="suggestions-activity-panel">
+                    <RightPanel workspaceId={workspaceId!} />
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            )}
           </div>
         </div>
       </AdminLayout>
