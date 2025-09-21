@@ -3,8 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { searchService } from "./searchService";
 import { db } from "./db";
-import { bookmarks, searchIndex } from "@shared/schema";
+import { bookmarks, searchIndex, insertWorkspaceResourceSchema } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs/promises';
 
 /*
 <important_code_snippet_instructions>
@@ -23,6 +26,50 @@ import { Anthropic } from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+// Configure multer for file uploads
+const uploadStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadsDir = path.join(process.cwd(), 'attached_assets', 'uploads');
+    try {
+      await fs.mkdir(uploadsDir, { recursive: true });
+      cb(null, uploadsDir);
+    } catch (error) {
+      cb(error as Error, uploadsDir);
+    }
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage: uploadStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt', '.doc', '.docx', '.md'];
+    const allowedMimeTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
+      'application/pdf',
+      'text/plain', 'text/markdown',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    
+    const ext = path.extname(file.originalname).toLowerCase();
+    const isValidExtension = allowedExtensions.includes(ext);
+    const isValidMimeType = allowedMimeTypes.includes(file.mimetype);
+    
+    if (isValidExtension && isValidMimeType) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only images, PDFs, and text documents are allowed'));
+    }
+  }
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1324,6 +1371,262 @@ Transform the following content:`;
     } catch (error: any) {
       console.error('Get activities error:', error);
       res.status(500).json({ error: 'Failed to fetch activities' });
+    }
+  });
+
+  // Workspace Resources API Routes
+  app.get('/api/admin/workspaces/:id/resources', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const resources = await storage.getWorkspaceResources(id);
+      res.json({ resources });
+    } catch (error: any) {
+      console.error('Get workspace resources error:', error);
+      res.status(500).json({ error: 'Failed to fetch resources' });
+    }
+  });
+
+  app.post('/api/admin/workspaces/:id/resources', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Validate request body with Zod
+      const validationResult = insertWorkspaceResourceSchema.omit({ 
+        workspaceId: true, 
+        id: true, 
+        createdAt: true 
+      }).safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid request data',
+          details: validationResult.error.errors
+        });
+      }
+      
+      const { name, type, content, metadata = {} } = validationResult.data;
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const resource = await storage.createWorkspaceResource({
+        workspaceId: id,
+        name,
+        type,
+        content: content || null,
+        mimeType: null,
+        size: null,
+        metadata: {
+          ...metadata,
+          addedBy: req.user.id,
+          addedAt: new Date().toISOString()
+        }
+      });
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: id,
+        type: 'resource_added',
+        payload: { 
+          resourceId: resource.id,
+          resourceName: name,
+          resourceType: type
+        }
+      });
+
+      res.json({ resource, message: 'Resource created successfully' });
+    } catch (error: any) {
+      console.error('Create workspace resource error:', error);
+      res.status(500).json({ error: 'Failed to create resource' });
+    }
+  });
+
+  app.delete('/api/admin/workspaces/:workspaceId/resources/:resourceId', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { workspaceId, resourceId } = req.params;
+
+      const workspace = await storage.getWorkspace(workspaceId);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const resource = await storage.getWorkspaceResource(resourceId);
+      if (!resource) {
+        return res.status(404).json({ error: 'Resource not found' });
+      }
+
+      if (resource.workspaceId !== workspaceId) {
+        return res.status(403).json({ error: 'Resource does not belong to this workspace' });
+      }
+
+      const deleted = await storage.deleteWorkspaceResource(resourceId);
+      if (!deleted) {
+        return res.status(404).json({ error: 'Resource not found' });
+      }
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId,
+        type: 'resource_deleted',
+        payload: { 
+          resourceId,
+          resourceName: resource.name,
+          resourceType: resource.type
+        }
+      });
+
+      res.json({ message: 'Resource deleted successfully' });
+    } catch (error: any) {
+      console.error('Delete workspace resource error:', error);
+      res.status(500).json({ error: 'Failed to delete resource' });
+    }
+  });
+
+  // File upload route for workspace resources
+  app.post('/api/admin/workspaces/:id/resources/upload', requireAdminAuth, upload.single('file'), async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Parse and validate metadata if provided
+      let parsedMetadata = {};
+      if (req.body.metadata) {
+        try {
+          parsedMetadata = JSON.parse(req.body.metadata);
+        } catch (error) {
+          return res.status(400).json({ error: 'Invalid metadata JSON' });
+        }
+      }
+
+      // Validate upload data
+      const uploadData = {
+        name: req.body.name || file.originalname,
+        type: 'file',
+        metadata: parsedMetadata
+      };
+
+      const validationResult = insertWorkspaceResourceSchema.omit({ 
+        workspaceId: true, 
+        id: true, 
+        createdAt: true,
+        content: true,
+        mimeType: true,
+        size: true
+      }).safeParse(uploadData);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: 'Invalid upload data',
+          details: validationResult.error.errors
+        });
+      }
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Create resource record
+      const resource = await storage.createWorkspaceResource({
+        workspaceId: id,
+        name: file.originalname,
+        type: 'file',
+        content: `/attached_assets/uploads/${file.filename}`,
+        mimeType: file.mimetype,
+        size: file.size,
+        metadata: {
+          originalName: file.originalname,
+          uploadedBy: req.user.id,
+          uploadedAt: new Date().toISOString(),
+          fileExtension: path.extname(file.originalname)
+        }
+      });
+
+      // Log activity
+      await storage.createActivity({
+        workspaceId: id,
+        type: 'resource_added',
+        payload: { 
+          resourceId: resource.id,
+          resourceName: file.originalname,
+          resourceType: 'file',
+          fileSize: file.size
+        }
+      });
+
+      res.json({ resource, message: 'File uploaded successfully' });
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      res.status(500).json({ error: 'Failed to upload file' });
+    }
+  });
+
+  // File download endpoint for workspace resources
+  app.get('/api/admin/resources/:resourceId/download', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { resourceId } = req.params;
+
+      const resource = await storage.getWorkspaceResource(resourceId);
+      if (!resource) {
+        return res.status(404).json({ error: 'Resource not found' });
+      }
+
+      // Check workspace ownership
+      const workspace = await storage.getWorkspace(resource.workspaceId);
+      if (!workspace || workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      if (resource.type !== 'file' || !resource.content) {
+        return res.status(400).json({ error: 'Resource is not a downloadable file' });
+      }
+
+      const filePath = path.join(process.cwd(), resource.content.replace(/^\//, ''));
+      
+      try {
+        await fs.access(filePath);
+        
+        // Set appropriate headers
+        if (resource.mimeType) {
+          res.setHeader('Content-Type', resource.mimeType);
+        }
+        res.setHeader('Content-Disposition', `attachment; filename="${resource.name}"`);
+        
+        res.sendFile(filePath);
+      } catch (error) {
+        return res.status(404).json({ error: 'File not found on disk' });
+      }
+    } catch (error: any) {
+      console.error('File download error:', error);
+      res.status(500).json({ error: 'Failed to download file' });
     }
   });
 

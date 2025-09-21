@@ -19,6 +19,8 @@ import {
   type InsertSuggestion,
   type Activity,
   type InsertActivity,
+  type WorkspaceResource,
+  type InsertWorkspaceResource,
   users,
   adminSessions,
   issues,
@@ -28,7 +30,8 @@ import {
   revisions,
   messages,
   suggestions,
-  activities
+  activities,
+  workspaceResources
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -187,6 +190,12 @@ export interface IStorage {
   updateWorkspace(id: string, updates: Partial<InsertWorkspace>): Promise<Workspace | undefined>;
   deleteWorkspace(id: string): Promise<boolean>;
 
+  // Workspace resource methods
+  createWorkspaceResource(resource: InsertWorkspaceResource): Promise<WorkspaceResource>;
+  getWorkspaceResources(workspaceId: string): Promise<WorkspaceResource[]>;
+  getWorkspaceResource(id: string): Promise<WorkspaceResource | undefined>;
+  deleteWorkspaceResource(id: string): Promise<boolean>;
+
   // Draft methods
   createDraft(draft: InsertDraft): Promise<Draft>;
   getDraft(workspaceId: string): Promise<Draft | undefined>;
@@ -224,6 +233,7 @@ export class MemStorage implements IStorage {
   private messages: Map<string, Message>;
   private suggestions: Map<string, Suggestion>;
   private activities: Map<string, Activity>;
+  private workspaceResources: Map<string, WorkspaceResource>;
 
   constructor() {
     this.users = new Map();
@@ -236,6 +246,7 @@ export class MemStorage implements IStorage {
     this.messages = new Map();
     this.suggestions = new Map();
     this.activities = new Map();
+    this.workspaceResources = new Map();
   }
 
   // User methods
@@ -436,6 +447,32 @@ export class MemStorage implements IStorage {
 
   async deleteWorkspace(id: string): Promise<boolean> {
     return this.workspaces.delete(id);
+  }
+
+  // Workspace resource methods
+  async createWorkspaceResource(insertResource: InsertWorkspaceResource): Promise<WorkspaceResource> {
+    const id = randomUUID();
+    const resource: WorkspaceResource = {
+      ...insertResource,
+      id,
+      createdAt: new Date()
+    };
+    this.workspaceResources.set(id, resource);
+    return resource;
+  }
+
+  async getWorkspaceResources(workspaceId: string): Promise<WorkspaceResource[]> {
+    return Array.from(this.workspaceResources.values())
+      .filter(resource => resource.workspaceId === workspaceId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getWorkspaceResource(id: string): Promise<WorkspaceResource | undefined> {
+    return this.workspaceResources.get(id);
+  }
+
+  async deleteWorkspaceResource(id: string): Promise<boolean> {
+    return this.workspaceResources.delete(id);
   }
 
   // Draft methods
@@ -821,6 +858,35 @@ export class DbStorage implements IStorage {
   async deleteWorkspace(id: string): Promise<boolean> {
     const result = await db.delete(workspaces)
       .where(eq(workspaces.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Workspace resource methods
+  async createWorkspaceResource(insertResource: InsertWorkspaceResource): Promise<WorkspaceResource> {
+    const result = await db.insert(workspaceResources).values(insertResource).returning();
+    return result[0];
+  }
+
+  async getWorkspaceResources(workspaceId: string): Promise<WorkspaceResource[]> {
+    const result = await db.select()
+      .from(workspaceResources)
+      .where(eq(workspaceResources.workspaceId, workspaceId))
+      .orderBy(desc(workspaceResources.createdAt));
+    return result;
+  }
+
+  async getWorkspaceResource(id: string): Promise<WorkspaceResource | undefined> {
+    const result = await db.select()
+      .from(workspaceResources)
+      .where(eq(workspaceResources.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async deleteWorkspaceResource(id: string): Promise<boolean> {
+    const result = await db.delete(workspaceResources)
+      .where(eq(workspaceResources.id, id))
       .returning();
     return result.length > 0;
   }

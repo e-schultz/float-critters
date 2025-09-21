@@ -195,6 +195,22 @@ export const activities = pgTable("activities", {
   typeIdx: index("activities_type_idx").on(table.type),
 }));
 
+// Workspace resources table for file uploads and text resources
+export const workspaceResources = pgTable("workspace_resources", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workspaceId: varchar("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // 'file', 'text', 'url'
+  content: text("content"), // File path/URL for files, actual content for text
+  mimeType: text("mime_type"), // For files
+  size: integer("size"), // File size in bytes
+  metadata: jsonb("metadata"), // Additional metadata like original filename, description, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  workspaceIdIdx: index("workspace_resources_workspace_id_idx").on(table.workspaceId),
+  typeIdx: index("workspace_resources_type_idx").on(table.type),
+}));
+
 export const insertAdminSessionSchema = createInsertSchema(adminSessions).omit({
   id: true,
   createdAt: true,
@@ -243,6 +259,11 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
   createdAt: true,
 });
 
+export const insertWorkspaceResourceSchema = createInsertSchema(workspaceResources).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertSearchIndex = z.infer<typeof insertSearchIndexSchema>;
 export type SearchIndex = typeof searchIndex.$inferSelect;
 export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
@@ -265,3 +286,5 @@ export type InsertSuggestion = z.infer<typeof insertSuggestionSchema>;
 export type Suggestion = typeof suggestions.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type Activity = typeof activities.$inferSelect;
+export type InsertWorkspaceResource = z.infer<typeof insertWorkspaceResourceSchema>;
+export type WorkspaceResource = typeof workspaceResources.$inferSelect;
