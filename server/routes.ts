@@ -1085,6 +1085,115 @@ Transform the following content:`;
     }
   });
 
+  // AI SDK compatible chat endpoint
+  app.post('/api/admin/workspaces/:id/chat-ai', requireAdminAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { messages, sectionPath } = req.body;
+
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Messages array is required' });
+      }
+
+      const workspace = await storage.getWorkspace(id);
+      if (!workspace) {
+        return res.status(404).json({ error: 'Workspace not found' });
+      }
+
+      if (workspace.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Get current draft for context
+      const draft = await storage.getDraft(id);
+      
+      // Extract last user message
+      const lastMessage = messages[messages.length - 1];
+      const userMessageContent = lastMessage?.content || '';
+
+      // Build workspace context system prompt with section path
+      const systemPrompt = buildWorkspaceSystemPrompt(workspace, draft, sectionPath);
+
+      // Store user message
+      await storage.createMessage({
+        workspaceId: id,
+        role: 'user',
+        content: userMessageContent,
+        sectionPath: sectionPath || null,
+        metadata: { fromChat: true }
+      });
+
+      // Create Anthropic stream using AI SDK format
+      const stream = await anthropic.messages.create({
+        model: DEFAULT_MODEL_STR,
+        max_tokens: 1000,
+        temperature: 0.7,
+        system: systemPrompt,
+        messages: messages.map((msg: any) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        })),
+        stream: true
+      });
+
+      // Convert to AI SDK compatible stream
+      let fullResponse = '';
+      
+      const textStream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of stream) {
+              if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+                const text = chunk.delta.text;
+                fullResponse += text;
+                controller.enqueue(new TextEncoder().encode(text));
+              }
+            }
+            
+            // Store assistant response
+            await storage.createMessage({
+              workspaceId: id,
+              role: 'assistant',
+              content: fullResponse,
+              sectionPath: sectionPath || null,
+              metadata: { fromChat: true, model: DEFAULT_MODEL_STR }
+            });
+
+            // Log activity
+            await storage.createActivity({
+              workspaceId: id,
+              type: 'message_sent',
+              payload: { 
+                userMessage: userMessageContent.length > 100 ? userMessageContent.substring(0, 100) + '...' : userMessageContent,
+                sectionPath: sectionPath || null,
+                responseLength: fullResponse.length
+              }
+            });
+
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        }
+      });
+
+      return new Response(textStream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Workspace AI chat error:', error);
+      return res.status(500).json({ 
+        error: 'Failed to process chat message',
+        details: error.message 
+      });
+    }
+  });
+
   app.post('/api/admin/workspaces/:id/chat', requireAdminAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
